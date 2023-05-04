@@ -1,0 +1,10 @@
+name: episcanner-downloader
+channels:
+  - conda-forge
+  - nodefaults
+dependencies:
+  - docker-compose
+  - make
+  - poetry
+  - python 3.10.*
+  - psycopg2
