@@ -1,13 +1,12 @@
 # options: dev, prod
 ENV:=$(ENV)
-HOST_UID:=$(HOST_UID)
-HOST_GID:=$(HOST_GID)
 
 
-.PHONY:create-dotenv
+.PHONY: create-dotenv
 create-dotenv:
-	touch .env
-	echo -n "HOST_UID=`id -u`\nHOST_GID=`id -g`" > .env
+	export HOST_UID=$$(id -u) && \
+	export HOST_GID=$$(id -g) && \
+	envsubst < env.tpl > .env
 
 # Export data for all states and diseases to Parquet files in the default output directory
 .PHONY:fetch-data
