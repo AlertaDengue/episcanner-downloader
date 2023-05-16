@@ -35,7 +35,7 @@ To install Episcanner Downloader, follow these steps:
 ```shell
    poetry install
 ``` 
-### Using a Virtual Environment (venv)
+#### Using a Virtual Environment (venv)
 1. Create a virtual environment:
 ```shell
    python -m venv env
@@ -50,7 +50,16 @@ To install Episcanner Downloader, follow these steps:
 ``` 
 ## Setting Environment Variables
 Before running Episcanner Downloader, make sure to set the required environment variables for connecting to the PSQL database. You can use the provided Makefile to create a .env file with the exported variables:
-1. Create a .env file in the project root directory with the exported variables.
+1. Set the required environment variables for connecting to the PSQL database:
+```shell
+   export AIRFLOW_PSQL_USER_MAIN=<your_psql_user>
+   export AIRFLOW_PSQL_PASSWORD_MAIN=<your_psql_password>
+   export AIRFLOW_PSQL_HOST_MAIN=<your_psql_host>
+   export AIRFLOW_PSQL_PORT_MAIN=<your_psql_port>
+   export AIRFLOW_PSQL_DB_MAIN=<your_psql_database>
+```
+
+2. Create a .env file in the project root directory with the exported variables.
 ```shell
    make create-env
 ```
@@ -61,15 +70,7 @@ To use Episcanner Downloader, follow these steps:
 ```shell
    source /path/to/episcanner-downloader/venv/bin/activate
 ``` 
-2. Set the required environment variables for connecting to the PSQL database:
-```shell
-   export AIRFLOW_PSQL_USER_MAIN=<your_psql_user>
-   export AIRFLOW_PSQL_PASSWORD_MAIN=<your_psql_password>
-   export AIRFLOW_PSQL_HOST_MAIN=<your_psql_host>
-   export AIRFLOW_PSQL_PORT_MAIN=<your_psql_port>
-   export AIRFLOW_PSQL_DB_MAIN=<your_psql_database>
-```
-3. Run the Episcanner Downloader:
+2. Run the Episcanner Downloader:
 ```shell
    python epi_scanner/downloader/export_data.py -s <source> -d <diseases> -o <output_directory>
 ``` 
