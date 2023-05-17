@@ -35,7 +35,7 @@ To install Episcanner Downloader, follow these steps:
 ```shell
    poetry install
 ``` 
-#### Using a Virtual Environment (venv)
+### Using a Virtual Environment (venv)
 1. Create a virtual environment:
 ```shell
    python -m venv env
