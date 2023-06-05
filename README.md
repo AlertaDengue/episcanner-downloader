@@ -52,11 +52,11 @@ To install Episcanner Downloader, follow these steps:
 Before running Episcanner Downloader, make sure to set the required environment variables for connecting to the PSQL database. You can use the provided Makefile to create a .env file with the exported variables:
 1. Set the required environment variables for connecting to the PSQL database:
 ```shell
-   export AIRFLOW_PSQL_USER_MAIN=<your_psql_user>
-   export AIRFLOW_PSQL_PASSWORD_MAIN=<your_psql_password>
-   export AIRFLOW_PSQL_HOST_MAIN=<your_psql_host>
-   export AIRFLOW_PSQL_PORT_MAIN=<your_psql_port>
-   export AIRFLOW_PSQL_DB_MAIN=<your_psql_database>
+   export PSQL_USER=<your_psql_user>
+   export PSQL_PASSWORD=<your_psql_password>
+   export PSQL_HOST=<your_psql_host>
+   export PSQL_PORT=<your_psql_port>
+   export PSQL_USER=<your_psql_database>
 ```
 
 2. Create a .env file in the project root directory with the exported variables.
