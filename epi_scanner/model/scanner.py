@@ -53,9 +53,9 @@ def otim(df, t_ini, t_fin, verbose=False):
     df.reset_index(inplace=True)
     df["casos_cum"] = df.casos.cumsum()
     params = Parameters()
-    params.add("gamma", min=0.3, max=0.33)
-    params.add("L1", min=1.0, max=1e5)
-    params.add("tp1", min=10, max=30)
+    params.add("gamma", min=0.95, max=1.05)
+    params.add("L1", min=1.0, max=5e5)
+    params.add("tp1", min=5, max=35)
     params.add("b1", min=1e-6, max=1)
     params.add("a1", expr="b1/(gamma + b1)", min=0.001, max=1)
 
