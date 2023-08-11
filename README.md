@@ -61,7 +61,7 @@ Before running Episcanner Downloader, make sure to set the required environment 
 
 2. Create a .env file in the project root directory with the exported variables.
 ```shell
-   make create-env
+   make create-dotenv
 ```
 ## Usage
 To use Episcanner Downloader, follow these steps:
@@ -72,9 +72,10 @@ To use Episcanner Downloader, follow these steps:
 ``` 
 2. Run the Episcanner Downloader:
 ```shell
-   python epi_scanner/downloader/export_data.py -s <source> -d <diseases> -o <output_directory>
+   mkdir data 
+   python epi_scanner/downloader/export_data.py -s <source> -d <diseases> -o data 
 ``` 
-*Replace <source> with the desired source (e.g., 'AL') and <diseases> with the specific diseases you want to download (e.g., 'dengue chikungunya'). Specify the <output_directory> where the downloaded data should be saved.*
+*Replace <source> with the desired source (e.g., 'MG', or 'all' to download all states) and <diseases> with the specific diseases you want to download (e.g., 'dengue chikungunya'). Specify the <output_directory> where the data should be saved.*
 
 ## License
 Episcanner Downloader is licensed under the [MIT License](https://github.com/AlertaDengue/episcanner-downloader/blob/main/LICENSE). See the LICENSE file for more details.
