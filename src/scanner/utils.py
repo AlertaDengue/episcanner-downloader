@@ -1,11 +1,6 @@
-import os
-
 import numpy as np
 import lmfit as lm
 from lmfit import Parameters
-from loguru import logger
-from sqlalchemy import create_engine
-from sqlalchemy.engine import Engine
 
 
 STATES = {
@@ -37,27 +32,6 @@ STATES = {
     "SP": "São Paulo",
     "TO": "Tocantins",
 }
-
-
-def make_connection() -> Engine:
-    """
-    Returns:
-        db_engine: URI with driver connection.
-    """
-    PSQL_URI = os.getenv("EPISCANNER_PSQL_URI")
-
-    try:
-        connection = create_engine(PSQL_URI)
-    except ConnectionError as e:
-        logger.error(
-            "Missing or incorrect `EPISCANNER_PSQL_URI` variable. Try:"
-        )
-        logger.error(
-            "export EPISCANNER_PSQL_URI="
-            '"postgresql://[user]:[password]@[host]:[port]/[database]"'
-        )
-        raise e
-    return connection
 
 
 # Richards Model

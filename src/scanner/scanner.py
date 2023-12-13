@@ -5,9 +5,8 @@ from typing import Optional, Literal, Union
 import pandas as pd
 from loguru import logger
 
-from settings import make_connection
 from utils import otim, get_SIR_pars
-from query import historico_alerta
+from sql import historico_alerta_query, make_connection
 
 
 def get_alerta_table(
@@ -33,7 +32,7 @@ def get_alerta_table(
         df: Pandas dataframe
     """
 
-    query = historico_alerta(disease, uf, geocode)
+    query = historico_alerta_query(disease, uf, geocode)
 
     with make_connection().connect() as conn:
         df = pd.read_sql_query(query, conn, index_col="id")
