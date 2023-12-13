@@ -3,9 +3,11 @@ from pathlib import Path
 from typing import List, Optional
 
 import pandas as pd
-from epi_scanner.downloader.fetch_data import data_to_parquet
-from epi_scanner.model.scanner import EpiScanner
-from epi_scanner.settings import EPISCANNER_DATA_DIR, STATES
+
+from settings import EPISCANNER_DATA_DIR
+from scanner import EpiScanner
+from utils import STATES
+from fetch import data_to_parquet
 
 
 def export_data_to_dir(

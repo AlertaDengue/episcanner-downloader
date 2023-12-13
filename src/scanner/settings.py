@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 
+from loguru import logger
 from dotenv import load_dotenv
 from sqlalchemy import create_engine
 
@@ -24,20 +25,18 @@ def make_connection():
     Returns:
         db_engine: URI with driver connection.
     """
-    PSQL_DB = os.getenv("PSQL_DB")
-    PSQL_USER = os.getenv("PSQL_USER")
-    PSQL_HOST = os.getenv("PSQL_HOST")
-    PSQL_PASSWORD = os.getenv("PSQL_PASSWORD")
-    PSQL_PORT = os.getenv("PSQL_PORT")
-
-    PSQL_URI = (
-        "postgresql://"
-        f"{PSQL_USER}:{PSQL_PASSWORD}@{PSQL_HOST}:{PSQL_PORT}/{PSQL_DB}"
-    )
+    PSQL_URI = os.getenv("EPISCANNER_PSQL_URI")
 
     try:
         connection = create_engine(PSQL_URI)
     except ConnectionError as e:
+        logger.error(
+            "Missing or incorrect `EPISCANNER_PSQL_URI` variable. Try:"
+        )
+        logger.error(
+            "export EPISCANNER_PSQL_URI="
+            '"postgresql://[user]:[password]@[host]:[port]/[database]"'
+        )
         raise e
     return connection
 
@@ -48,12 +47,9 @@ def get_disease_suffix(disease: str, empty_for_dengue: bool = True):
     :return: suffix to table name
     """
     return (
-        ("" if empty_for_dengue else "_dengue")
-        if disease == "dengue"
-        else "_chik"
-        if disease == "chikungunya"
-        else "_zika"
-        if disease == "zika"
+        ("" if empty_for_dengue else "_dengue") if disease == "dengue"
+        else "_chik" if disease == "chikungunya"
+        else "_zika" if disease == "zika"
         else ""
     )
 

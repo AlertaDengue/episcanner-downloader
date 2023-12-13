@@ -4,7 +4,7 @@ from typing import Optional
 import pandas as pd
 
 # Local
-from epi_scanner.settings import STATES, get_disease_suffix, make_connection
+from settings import STATES, get_disease_suffix, make_connection
 
 
 def get_alerta_table(
