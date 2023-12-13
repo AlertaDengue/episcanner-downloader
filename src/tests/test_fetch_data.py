@@ -3,8 +3,8 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import pytest
-from epi_scanner.downloader.fetch_data import data_to_parquet, get_alerta_table
-from epi_scanner.model.scanner import EpiScanner
+from scanner.fetch import data_to_parquet, get_alerta_table
+from scanner.scanner import EpiScanner
 
 
 def test_get_alerta_table():

@@ -2,9 +2,10 @@ from pathlib import Path
 from typing import Optional
 
 import pandas as pd
+from sqlalchemy.engine import Engine
 
-# Local
-from settings import STATES, get_disease_suffix, make_connection
+from settings import STATES, make_connection
+import query
 
 
 def get_alerta_table(
@@ -26,36 +27,14 @@ def get_alerta_table(
         df: Pandas dataframe
     """
 
-    connection = make_connection()
+    connection: Engine = make_connection()
 
-    if state_abbv in STATES:
-        state_name = STATES.get(state_abbv)
+    historico_alerta_query = query.historico_alerta(
+        disease, state_abbv, municipio_geocodigo
+    )
 
-    table_suffix = ""
-    if disease != "dengue":
-        table_suffix = get_disease_suffix(disease)
-
-    # Need the name of the state to query DengueGlobal table
-
-    if municipio_geocodigo is None:
-        query = f"""
-            SELECT historico.*
-            FROM "Municipio"."Historico_alerta{table_suffix}" historico
-            JOIN "Dengue_global"."Municipio" municipio
-            ON historico.municipio_geocodigo=municipio.geocodigo
-            WHERE municipio.uf=\'{state_name}\'
-            ORDER BY "data_iniSE" DESC ;"""
-
-    else:
-        query = f"""
-            SELECT *
-            FROM "Municipio"."Historico_alerta{table_suffix}"
-            WHERE municipio_geocodigo={municipio_geocodigo}
-            ORDER BY "data_iniSE" DESC ;"""
-
-    df = pd.read_sql_query(query, connection, index_col="id")
-
-    connection.dispose()
+    with connection.connect() as conn:
+        df = pd.read_sql_query(historico_alerta_query, conn, index_col="id")
 
     df.data_iniSE = pd.to_datetime(df.data_iniSE)
 
@@ -130,7 +109,7 @@ def data_to_parquet(
             pq_fname_path = output_dir / pq_fname
 
             if not output_dir.exists():
-                raise FileNotFoundError(
+                raise NotADirectoryError(
                     f"""
                     Output directory not found: {output_dir}.
                     Please create it before running this function.
