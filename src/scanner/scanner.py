@@ -1,13 +1,111 @@
 from collections import defaultdict
 from pathlib import Path
+from typing import Optional, Literal, Union
 
 import pandas as pd
+from loguru import logger
 
+from settings import make_connection
 from utils import otim, get_SIR_pars
+from query import historico_alerta
+
+
+def get_alerta_table(
+    disease: Literal["dengue", "zika", "chik", "chikungunya"],
+    geocode: Optional[Union[str, int]] = None,
+    uf: Optional[Literal[
+        "AC", "AL", "AP", "AM", "BA", "CE", "ES", "GO", "MA", "MT", "MS", "MG",
+        "PA", "PB", "PR", "PE", "PI", "RJ", "RN", "RS", "RO", "RR", "SC", "SP",
+        "SE", "TO", "DF"
+    ]] = None,
+) -> pd.DataFrame:
+    """
+    Pulls the HistoricoAlerta data from a single city, or a UF from the 
+    InfoDengue database.
+
+    Parameters
+    ----------
+        disease: name of disease {'dengue', 'chik' or 'zika'}
+        geocode: municipio_geocodigo (one city) or None
+        uf: abbreviation codes of the federative units of Brazil
+    Returns
+    -------
+        df: Pandas dataframe
+    """
+
+    query = historico_alerta(disease, uf, geocode)
+
+    with make_connection().connect() as conn:
+        df = pd.read_sql_query(query, conn, index_col="id")
+
+    df.data_iniSE = pd.to_datetime(df.data_iniSE)
+
+    df.set_index("data_iniSE", inplace=True)
+
+    return df
+
+
+def data_to_parquet(
+    disease: Literal["dengue", "zika", "chik", "chikungunya"],
+    geocode: Optional[Union[str, int]] = None,
+    uf: Optional[Literal[
+        "AC", "AL", "AP", "AM", "BA", "CE", "ES", "GO", "MA", "MT", "MS", "MG",
+        "PA", "PB", "PR", "PE", "PI", "RJ", "RN", "RS", "RO", "RR", "SC", "SP",
+        "SE", "TO", "DF"
+    ]] = None,
+    output_dir: Optional[str] = None,
+) -> Path:
+    """
+    Create the parquet files for the `disease` by `geocode` or `uf`.
+
+    Parameters
+    ----------
+        disease: name of disease {'dengue', 'chik', 'zika'}
+        geocode: municipio_geocodigo (one city) or None
+        uf: abbreviated codes of the federative units of Brazil or None
+        output_dir: directory where the parquet file will be saved
+    Returns
+    -------
+        Path where the parquet files were saved
+    """
+    output_dir = Path(output_dir) if output_dir else Path()
+
+    if not output_dir.exists():
+        raise NotADirectoryError(
+            f"""
+            Output directory not found: {output_dir}.
+            Please create it before running this function.
+            """
+        )
+
+    df = get_alerta_table(disease, geocode, uf)
+
+    if uf:
+        pq_fname = f"{uf}_{disease}.parquet"
+
+    if geocode:
+        pq_fname = f"{geocode}_{disease}.parquet"
+
+    pq_fname_path = output_dir / pq_fname
+
+    df.to_parquet(pq_fname_path)
+    logger.info(f"{pq_fname_path} saved")
+
+    return pq_fname_path
 
 
 class EpiScanner:
-    def __init__(self, last_week: int, data: pd.DataFrame):
+    def __init__(
+        self,
+        last_week: int,
+        disease: Literal["dengue", "zika", "chik", "chikungunya"],
+        geocode: Optional[Union[str, int]] = None,
+        uf: Optional[Literal[
+            "AC", "AL", "AP", "AM", "BA", "CE", "ES", "GO", "MA", "MT", "MS",
+            "MG", "PA", "PB", "PR", "PE", "PI", "RJ", "RN", "RS", "RO", "RR",
+            "SC", "SP", "SE", "TO", "DF"
+        ]] = None,
+    ):
         """
         Detecting Epidemic Curves by Scanning Time Series Data
 
@@ -20,7 +118,7 @@ class EpiScanner:
             A pandas DataFrame containing the time series data for all cities.
         """
         self.window = last_week
-        self.data = data
+        self.data = get_alerta_table(disease, geocode, uf)
         self.results = defaultdict(list)
         self.curves = defaultdict(list)
 
