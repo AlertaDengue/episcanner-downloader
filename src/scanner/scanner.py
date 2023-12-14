@@ -1,87 +1,36 @@
+import os
 from collections import defaultdict
 from pathlib import Path
 from typing import Optional, Literal
+from dotenv import load_dotenv
 
+from sqlalchemy import create_engine
+from sqlalchemy.engine import Engine
 import pandas as pd
 from loguru import logger
 
-from .utils import otim, get_SIR_pars
-from .sql import historico_alerta_query, make_connection
+from .utils import otim, get_SIR_pars, STATES
 
 
-def get_alerta_table(
-    disease: Literal["dengue", "zika", "chik", "chikungunya"],
-    uf: Optional[Literal[
-        "AC", "AL", "AP", "AM", "BA", "CE", "ES", "GO", "MA", "MT", "MS", "MG",
-        "PA", "PB", "PR", "PE", "PI", "RJ", "RN", "RS", "RO", "RR", "SC", "SP",
-        "SE", "TO", "DF"
-    ]] = None,
-) -> pd.DataFrame:
+def make_connection() -> Engine:
     """
-    Pulls the HistoricoAlerta data from a single city, or a UF from the 
-    InfoDengue database.
-
-    Parameters
-    ----------
-        disease: name of disease {'dengue', 'chik' or 'zika'}
-        uf: abbreviation codes of the federative units of Brazil. E.g: "SP"
-    Returns
-    -------
-        df: Pandas dataframe
+    Returns:
+        db_engine: URI with driver connection.
     """
 
-    query = historico_alerta_query(disease, uf)
+    load_dotenv()
+    PSQL_URI = os.getenv("EPISCANNER_PSQL_URI")
 
-    with make_connection().connect() as conn:
-        df = pd.read_sql_query(query, conn, index_col="id")
-
-    df.data_iniSE = pd.to_datetime(df.data_iniSE)
-    df.set_index("data_iniSE", inplace=True)
-
-    return df
-
-
-def data_to_parquet(
-    disease: Literal["dengue", "zika", "chik", "chikungunya"],
-    uf: Literal[
-        "AC", "AL", "AP", "AM", "BA", "CE", "ES", "GO", "MA", "MT", "MS", "MG",
-        "PA", "PB", "PR", "PE", "PI", "RJ", "RN", "RS", "RO", "RR", "SC", "SP",
-        "SE", "TO", "DF"
-    ],
-    output_dir: Optional[str] = None,
-) -> Path:
-    """
-    Create the parquet files for the `disease` by `geocode` or `uf`.
-
-    Parameters
-    ----------
-        disease: name of disease {'dengue', 'chik', 'zika'}
-        geocode: municipio_geocodigo (one city) or None
-        uf: abbreviated codes of the federative units of Brazil or None
-        output_dir: directory where the parquet file will be saved
-    Returns
-    -------
-        Path where the parquet files were saved
-    """
-    output_dir = Path(output_dir) if output_dir else Path()
-
-    if not output_dir.exists():
-        raise NotADirectoryError(
-            f"""
-            Output directory not found: {output_dir}.
-            Please create it before running this function.
-            """
+    try:
+        connection = create_engine(PSQL_URI)
+    except ConnectionError as e:
+        logger.error(
+            "Missing or incorrect `EPISCANNER_PSQL_URI` variable. Try:\n"
+            "export EPISCANNER_PSQL_URI="
+            '"postgresql://[user]:[password]@[host]:[port]/[database]"'
         )
-
-    df = get_alerta_table(disease, uf)
-
-    pq_fname = f"{uf}_{disease}.parquet"
-    pq_fname_path = output_dir / pq_fname
-
-    df.to_parquet(pq_fname_path)
-    logger.info(f"{pq_fname_path} saved")
-
-    return pq_fname_path
+        raise e
+    return connection
 
 
 class EpiScanner:
@@ -98,6 +47,7 @@ class EpiScanner:
             "MG", "PA", "PB", "PR", "PE", "PI", "RJ", "RN", "RS", "RO", "RR",
             "SC", "SP", "SE", "TO", "DF"
         ],
+        verbose: bool = False
     ):
         """
         Detecting Epidemic Curves by Scanning Time Series Data
@@ -107,11 +57,14 @@ class EpiScanner:
         last_week : int
             The last week of data to include in the analysis, represented as
             a two-digit number (e.g., 20 for the 20th week of the year).
+        disease: name of disease {'dengue', 'chik', 'zika'}
+        uf: abbreviated codes of the federative units of Brazil. E.g: "SP"
         data : pandas.DataFrame
             A pandas DataFrame containing the time series data for all cities.
         """
+        self.verbose = verbose
         self.window = int(last_week)
-        self.data = get_alerta_table(disease, uf)
+        self.data = self._get_alerta_table(disease, uf)
         for geocode in self.data.municipio_geocodigo.unique():
             self._scan(geocode)
 
@@ -127,11 +80,92 @@ class EpiScanner:
         """
         return self._to_csv(output_path)
 
-    def to_parquet():
+    def to_parquet(self, output_path: str):
+        """
+        Parameters
+        ----------
+        output_path: entire or relative path of the result parquet file
+
+        Return
+        ----------
+        Path of the parquet file
+        """
+        return self._to_parquet(output_path)
+
+    def to_duckdb(self, output_path: str):
         ...
 
-    def to_duckdb():
-        ...
+    def _historico_alerta_query(
+        self,
+        disease: Literal["dengue", "zika", "chik", "chikungunya"],
+        uf: Literal[
+            "AC", "AL", "AP", "AM", "BA", "CE", "ES", "GO", "MA", "MT", "MS",
+            "MG", "PA", "PB", "PR", "PE", "PI", "RJ", "RN", "RS", "RO", "RR",
+            "SC", "SP", "SE", "TO", "DF"
+        ],
+    ) -> str:
+        """
+        Returns a query for retrieving data from HistoricoAlerta[disease]
+        """
+        if not disease:
+            raise ValueError(
+                "`disease` not defined. Options: dengue, zika, chikungunya"
+            )
+
+        disease = disease.lower()
+
+        if disease == "chikungunya":
+            disease = "chik"
+
+        if disease not in ["dengue", "zika", "chik"]:
+            raise NotImplementedError(
+                "Unknown `disease`. Options: dengue, zika, chikungunya"
+            )
+
+        if disease == "dengue":
+            table_suffix = ""
+        else:
+            table_suffix = "_" + disease
+
+        state_name = STATES[uf]
+        return f"""
+            SELECT historico.*
+            FROM "Municipio"."Historico_alerta{table_suffix}" historico
+            JOIN "Dengue_global"."Municipio" municipio
+            ON historico.municipio_geocodigo=municipio.geocodigo
+            WHERE municipio.uf=\'{state_name}\'
+            ORDER BY "data_iniSE" DESC;"""
+
+    def _get_alerta_table(
+        self,
+        disease: Literal["dengue", "zika", "chik", "chikungunya"],
+        uf: Optional[Literal[
+            "AC", "AL", "AP", "AM", "BA", "CE", "ES", "GO", "MA", "MT", "MS",
+            "MG", "PA", "PB", "PR", "PE", "PI", "RJ", "RN", "RS", "RO", "RR",
+            "SC", "SP", "SE", "TO", "DF"
+        ]] = None,
+    ) -> pd.DataFrame:
+        """
+        Pulls the HistoricoAlerta data from a single city, or a UF from the 
+        InfoDengue database.
+
+        Parameters
+        ----------
+            disease: name of disease {'dengue', 'chik' or 'zika'}
+            uf: abbreviation codes of the federative units of Brazil. E.g: "SP"
+        Returns
+        -------
+            df: Pandas dataframe
+        """
+
+        query = self._historico_alerta_query(disease, uf)
+
+        with make_connection().connect() as conn:
+            df = pd.read_sql_query(query, conn, index_col="id")
+
+        df.data_iniSE = pd.to_datetime(df.data_iniSE)
+        df.set_index("data_iniSE", inplace=True)
+        return df
 
     def _filter_city(self, geocode):
         dfcity = self.data[self.data.municipio_geocodigo == geocode].copy()
@@ -185,17 +219,17 @@ class EpiScanner:
 
         return pd.DataFrame(data)
 
-    def _scan(self, geocode, verbose=True):
+    def _scan(self, geocode):
         df = self._filter_city(geocode)
         df = df.assign(year=[i.year for i in df.index])
         for y in set(df.year.values):
-            if verbose:
-                print(f"Scanning year {y}")
+            if self.verbose:
+                logger.info(f"Scanning year {y}")
             dfy = df[df.year == y]
             has_transmission = dfy.transmissao.sum() > 3
             if not has_transmission:
-                if verbose:
-                    print(
+                if self.verbose:
+                    logger.info(
                         f"""
                         There where less that 3 weeks with Rt>1
                         in {geocode} in {y}.\nSkipping analysis
@@ -209,8 +243,8 @@ class EpiScanner:
             )
             self._save_results(geocode, y, out, curve)
             if out.success:
-                if verbose:
-                    print(
+                if self.verbose:
+                    logger.info(
                         f"""
                             R0 in {y}: {
                             self.results[geocode][-1]['sir_pars']['R0']
@@ -218,9 +252,8 @@ class EpiScanner:
                         """
                     )
 
-    def _to_csv(self, fname_path):
+    def _to_csv(self, fname_path: str):
         dfpars = self._parse_results()
-        # Create a Path object for the file path
         fname_path = Path(fname_path)
 
         if fname_path.is_dir():
@@ -229,13 +262,44 @@ class EpiScanner:
         if fname_path.suffix.lower() != ".csv":
             raise ValueError(f"{fname_path} must a CSV file")
 
+        if fname_path.exists():
+            logger.warning(f"{fname_path} already exists. Skipping...")
+            return fname_path
+
         try:
-            # Check if the directory exists and create it if necessary
             fname_path.parent.mkdir(parents=True, exist_ok=True)
-            # Write the DataFrame to CSV
             dfpars.to_csv(fname_path)
-            print(f"Data exported successfully to {fname_path}")
+            logger.info(f"Data exported successfully to {fname_path}")
         except (FileNotFoundError, PermissionError) as e:
             raise ValueError(f"Failed to write CSV file: {e}")
         except Exception as e:
             raise ValueError(f"Unexpected error while writing CSV file: {e}")
+
+        return fname_path
+
+    def _to_parquet(self, fname_path: str):
+        dfpars = self._parse_results()
+        fname_path = Path(fname_path)
+
+        if fname_path.is_dir():
+            raise ValueError(f"{fname_path} is a Directory")
+
+        if fname_path.suffix.lower() != ".parquet":
+            raise ValueError(f"{fname_path} must a parquet file")
+
+        if fname_path.exists():
+            logger.warning(f"{fname_path} already exists. Skipping...")
+            return fname_path
+
+        try:
+            fname_path.parent.mkdir(parents=True, exist_ok=True)
+            dfpars.to_parquet(fname_path)
+            logger.info(f"Data exported successfully to {fname_path}")
+        except (FileNotFoundError, PermissionError) as e:
+            raise ValueError(f"Failed to write parquet file: {e}")
+        except Exception as e:
+            raise ValueError(
+                f"Unexpected error while writing parquet file: {e}"
+            )
+
+        return fname_path
