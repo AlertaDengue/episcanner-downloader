@@ -108,6 +108,7 @@ def otim(df, t_ini, t_fin, verbose=False):
 
     df = df.iloc[:window]
 
-    df["richards"] = richfun_opt + np.zeros(window)
+    df = df.copy()
+    df.loc[:, "richards"] = richfun_opt + np.zeros(window)
 
     return out, df
