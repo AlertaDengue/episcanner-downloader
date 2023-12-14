@@ -1,12 +1,13 @@
 import os
+import asyncio
 from collections import defaultdict
 from pathlib import Path
-from typing import Optional, Literal
+from typing import Literal
 from dotenv import load_dotenv
 
+import pandas as pd
 from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
-import pandas as pd
 from loguru import logger
 
 from .utils import otim, get_SIR_pars, STATES
@@ -34,13 +35,6 @@ def make_connection() -> Engine:
 
 
 class EpiScanner:
-    disease: Literal["dengue", "zika", "chik", "chikungunya"]
-    uf: Literal[
-        "AC", "AL", "AP", "AM", "BA", "CE", "ES", "GO", "MA", "MT", "MS", "MG",
-        "PA", "PB", "PR", "PE", "PI", "RJ", "RN", "RS", "RO", "RR", "SC", "SP",
-        "SE", "TO", "DF"
-    ]
-    window: int
     results = defaultdict(list)
     curves = defaultdict(list)
 
@@ -91,8 +85,7 @@ class EpiScanner:
         self.verbose = verbose
         self.data = self._get_alerta_table()
 
-        for geocode in self.data.municipio_geocodigo.unique():
-            self._scan(geocode)
+        asyncio.run(self._scan_all())
 
     def to_csv(self, output_path: str) -> Path:
         """
@@ -206,29 +199,35 @@ class EpiScanner:
 
         return pd.DataFrame(data)
 
-    def _scan(self, geocode):
+    async def _scan(self, geocode):
         df = self._filter_city(geocode)
         df = df.assign(year=[i.year for i in df.index])
-        for y in set(df.year.values):
+
+        async def scan_year(y):
             if self.verbose:
                 logger.info(f"Scanning year {y}")
+
             dfy = df[df.year == y]
             has_transmission = dfy.transmissao.sum() > 3
+
             if not has_transmission:
                 if self.verbose:
                     logger.info(
                         f"""
-                        There where less that 3 weeks with Rt>1
+                        There were less than 3 weeks with Rt>1
                         in {geocode} in {y}.\nSkipping analysis
                         """
                     )
-                continue
+                return
+
             out, curve = otim(
                 dfy[["casos", "casos_cum"]].iloc[0: self.window],  # NOQA E203
                 0,
                 self.window,
             )
+
             self._save_results(geocode, y, out, curve)
+
             if out.success:
                 if self.verbose:
                     logger.info(
@@ -239,8 +238,22 @@ class EpiScanner:
                         """
                     )
 
+        tasks = [scan_year(y) for y in set(df.year.values)]
+        await asyncio.gather(*tasks)
+
+    async def _scan_all(self):
+        tasks = [
+            self._scan(geocode)
+            for geocode in self.data.municipio_geocodigo.unique()
+        ]
+        await asyncio.gather(*tasks)
+
     def _to_csv(self, fname_path: str):
+        if not bool(self.results):
+            raise ValueError("No result to export")
+
         dfpars = self._parse_results()
+
         fname_path = Path(fname_path)
 
         if fname_path.is_dir():
@@ -265,6 +278,9 @@ class EpiScanner:
         return fname_path
 
     def _to_parquet(self, fname_path: str):
+        if not bool(self.results):
+            raise ValueError("No result to export")
+
         dfpars = self._parse_results()
         fname_path = Path(fname_path)
 
