@@ -10,7 +10,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
 from loguru import logger
 
-from .utils import otim, get_SIR_pars, STATES
+from .utils import otim, get_SIR_pars, STATES, CACHEPATH
 
 
 def make_connection() -> Engine:
@@ -40,7 +40,6 @@ class EpiScanner:
 
     def __init__(
         self,
-        last_week: int,
         disease: Literal["dengue", "zika", "chik", "chikungunya"],
         uf: Literal[
             "AC", "AL", "AP", "AM", "BA", "CE", "ES", "GO", "MA", "MT", "MS",
@@ -54,13 +53,8 @@ class EpiScanner:
 
         Parameters
         ----------
-        last_week : int
-            The last week of data to include in the analysis, represented as
-            a two-digit number (e.g., 20 for the 20th week of the year).
         disease: name of disease {'dengue', 'chik', 'zika'}
         uf: abbreviated codes of the federative units of Brazil. E.g: "SP"
-        data : pandas.DataFrame
-            A pandas DataFrame containing the time series data for all cities.
         """
         disease = disease.lower()
 
@@ -69,50 +63,77 @@ class EpiScanner:
 
         if disease not in ["dengue", "zika", "chik"]:
             raise NotImplementedError(
-                "Unknown `disease`. Options: dengue, zika, chikungunya"
+                f"Unknown disease. {disease}"
+                "Options: dengue, zika, chikungunya"
             )
 
         uf = uf.upper()
-
         if uf not in STATES:
             raise NotImplementedError(
-                f"Unknown `uf`. Options: {list(STATES.keys())}"
+                f"Unknown uf {uf}. Options: {list(STATES.keys())}"
             )
 
         self.disease = disease
         self.uf = uf
-        self.window = int(last_week)
         self.verbose = verbose
         self.data = self._get_alerta_table()
+        self.window = int(self.data.SE.max() % 100)
 
         asyncio.run(self._scan_all())
 
-    def to_csv(self, output_path: str) -> Path:
+    def export(
+        self,
+        to: Literal["csv", "parquet", "duckdb"],
+        output_dir: str = CACHEPATH
+    ):
         """
+        Exports the result of the Scan into a file with the format: 
+        [UF]_[disease].[format]
+
         Parameters
-        ----------
-        output_path: entire or relative path of the result CSV file
-
-        Return
-        ----------
-        Path of the CSV file
+        -------
+            to: File format of the exported data. Options: duckdb, csv, parquet
+            output_dir: the directory where the file will be exported
         """
-        return self._to_csv(output_path)
+        format = to
 
-    def to_parquet(self, output_path: str):
-        """
-        Parameters
-        ----------
-        output_path: entire or relative path of the result parquet file
+        if not bool(self.results):
+            raise ValueError("No data to export")
 
-        Return
-        ----------
-        Path of the parquet file
-        """
-        return self._to_parquet(output_path)
+        if format not in ["csv", "parquet", "duckdb"]:
+            raise ValueError(
+                f"Unknown output format type {format}. "
+                "Options: csv, parquet or duckdb"
+            )
 
-    def to_duckdb(self, output_path: str):
-        ...
+        output_dir = Path(output_dir)
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+        file_name = self.uf + "_" + self.disease + "." + format
+        file = output_dir / file_name
+
+        df = self._parse_results()
+
+        if file.exists():
+            logger.warning(f"Overriding {file}")
+            file.unlink()
+
+        try:
+            match format:
+                case "csv":
+                    df.to_csv(file)
+                case "parquet":
+                    df.to_parquet(file)
+                case "duckdb":
+                    ...
+
+            logger.info(f"Data exported successfully to {file}")
+        except (FileNotFoundError, PermissionError) as e:
+            raise ValueError(f"Failed to write parquet file: {e}")
+        except Exception as e:
+            raise ValueError(
+                f"Unexpected error while writing parquet file: {e}"
+            )
 
     def _get_alerta_table(self) -> pd.DataFrame:
         """
@@ -247,62 +268,3 @@ class EpiScanner:
             for geocode in self.data.municipio_geocodigo.unique()
         ]
         await asyncio.gather(*tasks)
-
-    def _to_csv(self, fname_path: str):
-        if not bool(self.results):
-            raise ValueError("No result to export")
-
-        dfpars = self._parse_results()
-
-        fname_path = Path(fname_path)
-
-        if fname_path.is_dir():
-            raise ValueError(f"{fname_path} is a Directory")
-
-        if fname_path.suffix.lower() != ".csv":
-            raise ValueError(f"{fname_path} must a CSV file")
-
-        if fname_path.exists():
-            logger.warning(f"{fname_path} already exists. Skipping...")
-            return fname_path
-
-        try:
-            fname_path.parent.mkdir(parents=True, exist_ok=True)
-            dfpars.to_csv(fname_path)
-            logger.info(f"Data exported successfully to {fname_path}")
-        except (FileNotFoundError, PermissionError) as e:
-            raise ValueError(f"Failed to write CSV file: {e}")
-        except Exception as e:
-            raise ValueError(f"Unexpected error while writing CSV file: {e}")
-
-        return fname_path
-
-    def _to_parquet(self, fname_path: str):
-        if not bool(self.results):
-            raise ValueError("No result to export")
-
-        dfpars = self._parse_results()
-        fname_path = Path(fname_path)
-
-        if fname_path.is_dir():
-            raise ValueError(f"{fname_path} is a Directory")
-
-        if fname_path.suffix.lower() != ".parquet":
-            raise ValueError(f"{fname_path} must a parquet file")
-
-        if fname_path.exists():
-            logger.warning(f"{fname_path} already exists. Skipping...")
-            return fname_path
-
-        try:
-            fname_path.parent.mkdir(parents=True, exist_ok=True)
-            dfpars.to_parquet(fname_path)
-            logger.info(f"Data exported successfully to {fname_path}")
-        except (FileNotFoundError, PermissionError) as e:
-            raise ValueError(f"Failed to write parquet file: {e}")
-        except Exception as e:
-            raise ValueError(
-                f"Unexpected error while writing parquet file: {e}"
-            )
-
-        return fname_path
