@@ -34,7 +34,13 @@ def make_connection() -> Engine:
 
 
 class EpiScanner:
-    window = int
+    disease: Literal["dengue", "zika", "chik", "chikungunya"]
+    uf: Literal[
+        "AC", "AL", "AP", "AM", "BA", "CE", "ES", "GO", "MA", "MT", "MS", "MG",
+        "PA", "PB", "PR", "PE", "PI", "RJ", "RN", "RS", "RO", "RR", "SC", "SP",
+        "SE", "TO", "DF"
+    ]
+    window: int
     results = defaultdict(list)
     curves = defaultdict(list)
 
@@ -62,9 +68,29 @@ class EpiScanner:
         data : pandas.DataFrame
             A pandas DataFrame containing the time series data for all cities.
         """
-        self.verbose = verbose
+        disease = disease.lower()
+
+        if disease == "chikungunya":
+            disease = "chik"
+
+        if disease not in ["dengue", "zika", "chik"]:
+            raise NotImplementedError(
+                "Unknown `disease`. Options: dengue, zika, chikungunya"
+            )
+
+        uf = uf.upper()
+
+        if uf not in STATES:
+            raise NotImplementedError(
+                f"Unknown `uf`. Options: {list(STATES.keys())}"
+            )
+
+        self.disease = disease
+        self.uf = uf
         self.window = int(last_week)
-        self.data = self._get_alerta_table(disease, uf)
+        self.verbose = verbose
+        self.data = self._get_alerta_table()
+
         for geocode in self.data.municipio_geocodigo.unique():
             self._scan(geocode)
 
@@ -95,70 +121,31 @@ class EpiScanner:
     def to_duckdb(self, output_path: str):
         ...
 
-    def _historico_alerta_query(
-        self,
-        disease: Literal["dengue", "zika", "chik", "chikungunya"],
-        uf: Literal[
-            "AC", "AL", "AP", "AM", "BA", "CE", "ES", "GO", "MA", "MT", "MS",
-            "MG", "PA", "PB", "PR", "PE", "PI", "RJ", "RN", "RS", "RO", "RR",
-            "SC", "SP", "SE", "TO", "DF"
-        ],
-    ) -> str:
+    def _get_alerta_table(self) -> pd.DataFrame:
         """
-        Returns a query for retrieving data from HistoricoAlerta[disease]
-        """
-        if not disease:
-            raise ValueError(
-                "`disease` not defined. Options: dengue, zika, chikungunya"
-            )
+        Pulls the HistoricoAlerta data for a disease and UF from the InfoDengue
+        database.
 
-        disease = disease.lower()
-
-        if disease == "chikungunya":
-            disease = "chik"
-
-        if disease not in ["dengue", "zika", "chik"]:
-            raise NotImplementedError(
-                "Unknown `disease`. Options: dengue, zika, chikungunya"
-            )
-
-        if disease == "dengue":
-            table_suffix = ""
-        else:
-            table_suffix = "_" + disease
-
-        state_name = STATES[uf]
-        return f"""
-            SELECT historico.*
-            FROM "Municipio"."Historico_alerta{table_suffix}" historico
-            JOIN "Dengue_global"."Municipio" municipio
-            ON historico.municipio_geocodigo=municipio.geocodigo
-            WHERE municipio.uf=\'{state_name}\'
-            ORDER BY "data_iniSE" DESC;"""
-
-    def _get_alerta_table(
-        self,
-        disease: Literal["dengue", "zika", "chik", "chikungunya"],
-        uf: Optional[Literal[
-            "AC", "AL", "AP", "AM", "BA", "CE", "ES", "GO", "MA", "MT", "MS",
-            "MG", "PA", "PB", "PR", "PE", "PI", "RJ", "RN", "RS", "RO", "RR",
-            "SC", "SP", "SE", "TO", "DF"
-        ]] = None,
-    ) -> pd.DataFrame:
-        """
-        Pulls the HistoricoAlerta data from a single city, or a UF from the 
-        InfoDengue database.
-
-        Parameters
-        ----------
-            disease: name of disease {'dengue', 'chik' or 'zika'}
-            uf: abbreviation codes of the federative units of Brazil. E.g: "SP"
         Returns
         -------
             df: Pandas dataframe
         """
 
-        query = self._historico_alerta_query(disease, uf)
+        if self.disease == "dengue":
+            table_suffix = ""
+        else:
+            table_suffix = "_" + self.disease
+
+        state_name = STATES[self.uf]
+
+        query = f"""
+            SELECT historico.*
+            FROM "Municipio"."Historico_alerta{table_suffix}" historico
+            JOIN "Dengue_global"."Municipio" municipio
+            ON historico.municipio_geocodigo=municipio.geocodigo
+            WHERE municipio.uf=\'{state_name}\'
+            ORDER BY "data_iniSE" DESC;
+        """
 
         with make_connection().connect() as conn:
             df = pd.read_sql_query(query, conn, index_col="id")
