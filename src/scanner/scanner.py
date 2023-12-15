@@ -1,5 +1,5 @@
-import os
 import asyncio
+import os
 from collections import defaultdict
 from pathlib import Path
 from typing import Literal
@@ -243,7 +243,7 @@ class EpiScanner:
                 return
 
             out, curve = otim(
-                dfy[["casos", "casos_cum"]].iloc[0: self.window],  # NOQA E203
+                dfy[["casos", "casos_cum"]].iloc[0 : self.window],  # NOQA E203
                 0,
                 self.window,
             )

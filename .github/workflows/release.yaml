@@ -41,6 +41,15 @@ jobs:
       with:
         node-version: 18
 
+    - name: Install dependencies
+      run: poetry install
+
+    - name: Build binary
+      run: poetry run build
+
+    - name: Package binary
+      run: zip -j episcanner.zip dist/episcanner
+
     - name: Test release
       if: ${{ github.event_name != 'workflow_dispatch' }}
       env:

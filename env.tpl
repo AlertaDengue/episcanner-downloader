@@ -1,1 +1,1 @@
-EPISCANNER_PSQL_URI="postgresql://user:password@host:port/database"
+EPISCANNER_PSQL_URI=$EPISCANNER_PSQL_URI

@@ -2,8 +2,8 @@
 ENV:=$(ENV)
 
 
-.PHONY: create-dotenv
-create-dotenv:
+.PHONY: dotenv
+dotenv:
 	export HOST_UID=$$(id -u) && \
 	export HOST_GID=$$(id -g) && \
 	envsubst < env.tpl > .env
