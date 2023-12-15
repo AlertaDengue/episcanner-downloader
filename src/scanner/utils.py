@@ -1,13 +1,13 @@
 import os
 import pathlib
 
-import numpy as np
 import lmfit as lm
+import numpy as np
 from lmfit import Parameters
 
 CACHEPATH = os.getenv(
-    "EPISCANNER_CACHEPATH", os.path.join(
-        str(pathlib.Path.home()), "episcanner")
+    "EPISCANNER_CACHEPATH",
+    os.path.join(str(pathlib.Path.home()), "episcanner"),
 )
 
 __cachepath__ = pathlib.Path(CACHEPATH)

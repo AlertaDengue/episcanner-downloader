@@ -1,16 +1,16 @@
-import os
 import asyncio
+import os
 from collections import defaultdict
 from pathlib import Path
 from typing import Literal
-from dotenv import load_dotenv
 
 import pandas as pd
+from dotenv import load_dotenv
+from loguru import logger
 from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
-from loguru import logger
 
-from .utils import otim, get_SIR_pars, STATES, CACHEPATH
+from .utils import CACHEPATH, STATES, get_SIR_pars, otim
 
 
 def make_connection() -> Engine:
@@ -41,12 +41,14 @@ class EpiScanner:
     def __init__(
         self,
         disease: Literal["dengue", "zika", "chik", "chikungunya"],
+        # fmt: off
         uf: Literal[
             "AC", "AL", "AP", "AM", "BA", "CE", "ES", "GO", "MA", "MT", "MS",
             "MG", "PA", "PB", "PR", "PE", "PI", "RJ", "RN", "RS", "RO", "RR",
             "SC", "SP", "SE", "TO", "DF"
         ],
-        verbose: bool = False
+        # fmt: on
+        verbose: bool = False,
     ):
         """
         Detecting Epidemic Curves by Scanning Time Series Data
@@ -84,10 +86,10 @@ class EpiScanner:
     def export(
         self,
         to: Literal["csv", "parquet", "duckdb"],
-        output_dir: str = CACHEPATH
+        output_dir: str = CACHEPATH,
     ):
         """
-        Exports the result of the Scan into a file with the format: 
+        Exports the result of the Scan into a file with the format:
         [UF]_[disease].[format]
 
         Parameters
@@ -114,7 +116,7 @@ class EpiScanner:
 
         df = self._parse_results()
 
-        if file.exists():
+        if file.exists() and format != "duckdb":
             logger.warning(f"Overriding {file}")
             file.unlink()
 
@@ -125,15 +127,13 @@ class EpiScanner:
                 case "parquet":
                     df.to_parquet(file)
                 case "duckdb":
-                    ...
+                    self._to_duckdb(output_dir)
 
             logger.info(f"Data exported successfully to {file}")
         except (FileNotFoundError, PermissionError) as e:
-            raise ValueError(f"Failed to write parquet file: {e}")
+            raise ValueError(f"Failed to write file: {e}")
         except Exception as e:
-            raise ValueError(
-                f"Unexpected error while writing parquet file: {e}"
-            )
+            raise ValueError(f"Unexpected error while writing file: {e}")
 
     def _get_alerta_table(self) -> pd.DataFrame:
         """
@@ -242,7 +242,7 @@ class EpiScanner:
                 return
 
             out, curve = otim(
-                dfy[["casos", "casos_cum"]].iloc[0: self.window],  # NOQA E203
+                dfy[["casos", "casos_cum"]].iloc[0 : self.window],  # NOQA E203
                 0,
                 self.window,
             )

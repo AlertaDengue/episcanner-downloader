@@ -1,7 +1,15 @@
+"""
+python src/scanner/cli.py -a -d dengue zika -f csv -v
+
+python src/scanner/cli.py -s SP RJ DF -d dengue zika -f csv parquet duckdb
+
+python src/scanner/cli.py -s SP -d zika -f csv -o /tmp
+"""
+
 import argparse
 
-from src.scanner.utils import STATES, CACHEPATH
 from src.scanner.scanner import EpiScanner
+from src.scanner.utils import CACHEPATH, STATES
 
 
 class StatesAction(argparse.Action):
@@ -19,7 +27,7 @@ class DiseasesAction(argparse.Action):
                 raise argparse.ArgumentError(
                     self,
                     f"Invalid disease: {value}. "
-                    "Options: dengue, zika, chik"
+                    "Options: dengue, zika, chik",
                 )
         setattr(namespace, self.dest, list(map(lambda x: x.lower(), values)))
 
@@ -31,7 +39,7 @@ class OutputDataTypeAction(argparse.Action):
                 raise argparse.ArgumentError(
                     self,
                     f"Invalid output format: {value}. "
-                    "Options: csv, parquet, duckdb"
+                    "Options: csv, parquet, duckdb",
                 )
         setattr(namespace, self.dest, list(map(lambda x: x.lower(), values)))
 
@@ -52,7 +60,7 @@ if __name__ == "__main__":
             Example:
             -s SP RJ
             """,
-        required=True,
+        required=False,
     )
 
     parser.add_argument(
@@ -89,7 +97,7 @@ if __name__ == "__main__":
         action=OutputDataTypeAction,
         help="File data format. Options: csv, parquet and/or duckdb",
         default=["duckdb"],
-        required=True
+        required=True,
     )
 
     parser.add_argument(
@@ -103,16 +111,19 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
+    if not args.all and not bool(args.states):
+        raise parser.error("No state was selected to fetch")
+
     for disease in args.diseases:
         for format in args.file_format:
             if args.all:
                 for state in STATES:
-                    EpiScanner(
-                        disease, state, args.verbose
-                    ).export(format, args.output_dir)
+                    EpiScanner(disease, state, args.verbose).export(
+                        format, args.output_dir
+                    )
                 break
 
             for state in args.states:
-                EpiScanner(
-                    disease, state, args.verbose
-                ).export(format, args.output_dir)
+                EpiScanner(disease, state, args.verbose).export(
+                    format, args.output_dir
+                )
