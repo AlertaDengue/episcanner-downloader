@@ -44,7 +44,7 @@ class OutputDataTypeAction(argparse.Action):
         setattr(namespace, self.dest, list(map(lambda x: x.lower(), values)))
 
 
-if __name__ == "__main__":
+def app():
     parser = argparse.ArgumentParser(
         description="Export EpiScanner data to duckdb, csv and parquet"
     )
@@ -112,7 +112,10 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if not args.all and not bool(args.states):
-        raise parser.error("No state was selected to fetch")
+        raise parser.error(
+            "one the following arguments are required: "
+            "-s/--states OR -a/--all"
+        )
 
     for disease in args.diseases:
         for format in args.file_format:

@@ -4,6 +4,7 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Literal
 
+import duckdb
 import pandas as pd
 from dotenv import load_dotenv
 from loguru import logger
@@ -242,7 +243,7 @@ class EpiScanner:
                 return
 
             out, curve = otim(
-                dfy[["casos", "casos_cum"]].iloc[0 : self.window],  # NOQA E203
+                dfy[["casos", "casos_cum"]].iloc[0: self.window],  # NOQA E203
                 0,
                 self.window,
             )
@@ -268,3 +269,21 @@ class EpiScanner:
             for geocode in self.data.municipio_geocodigo.unique()
         ]
         await asyncio.gather(*tasks)
+
+    def _to_duckdb(self, output_dir: str):
+        output_dir = Path(output_dir)
+        db = output_dir / "episcanner.duckdb"
+        con = duckdb.connect(str(db.absolute()))
+
+        df = self._parse_results()
+        table_name = self.uf
+
+        con.register('df', df)
+        con.execute(
+            f'CREATE OR REPLACE TABLE {table_name} AS SELECT * FROM df'
+        )
+        con.unregister('df')
+        con.close()
+
+        if self.verbose:
+            logger.info(f"{self.uf} data wrote into {db.absolute()}")
