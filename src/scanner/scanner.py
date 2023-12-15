@@ -243,7 +243,7 @@ class EpiScanner:
                 return
 
             out, curve = otim(
-                dfy[["casos", "casos_cum"]].iloc[0: self.window],  # NOQA E203
+                dfy[["casos", "casos_cum"]].iloc[0 : self.window],  # NOQA E203
                 0,
                 self.window,
             )
@@ -278,11 +278,11 @@ class EpiScanner:
         df = self._parse_results()
         table_name = self.uf
 
-        con.register('df', df)
+        con.register("df", df)
         con.execute(
-            f'CREATE OR REPLACE TABLE {table_name} AS SELECT * FROM df'
+            f"CREATE OR REPLACE TABLE {table_name} AS SELECT * FROM df"
         )
-        con.unregister('df')
+        con.unregister("df")
         con.close()
 
         if self.verbose:
