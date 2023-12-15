@@ -130,6 +130,9 @@ class EpiScanner:
                 case "duckdb":
                     self._to_duckdb(output_dir)
 
+            if format == "duckdb":
+                file = output_dir / "episcanner.duckdb"
+
             logger.info(f"Data exported successfully to {file}")
         except (FileNotFoundError, PermissionError) as e:
             raise ValueError(f"Failed to write file: {e}")
@@ -243,7 +246,7 @@ class EpiScanner:
                 return
 
             out, curve = otim(
-                dfy[["casos", "casos_cum"]].iloc[0 : self.window],  # NOQA E203
+                dfy[["casos", "casos_cum"]].iloc[0: self.window],  # NOQA E203
                 0,
                 self.window,
             )
