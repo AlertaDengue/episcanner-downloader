@@ -1,5 +1,5 @@
-import asyncio
 import os
+import asyncio
 from collections import defaultdict
 from pathlib import Path
 from typing import Literal
@@ -25,13 +25,12 @@ def make_connection() -> Engine:
 
     try:
         connection = create_engine(PSQL_URI)
-    except ConnectionError as e:
-        logger.error(
+    except (ConnectionError, AttributeError):
+        raise EnvironmentError(
             "Missing or incorrect `EPISCANNER_PSQL_URI` variable. Try:\n"
             "export EPISCANNER_PSQL_URI="
             '"postgresql://[user]:[password]@[host]:[port]/[database]"'
         )
-        raise e
     return connection
 
 
@@ -129,9 +128,7 @@ class EpiScanner:
                     df.to_parquet(file)
                 case "duckdb":
                     self._to_duckdb(output_dir)
-
-            if format == "duckdb":
-                file = output_dir / "episcanner.duckdb"
+                    file = output_dir / "episcanner.duckdb"
 
             logger.info(f"Data exported successfully to {file}")
         except (FileNotFoundError, PermissionError) as e:
