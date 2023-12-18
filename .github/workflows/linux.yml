@@ -52,6 +52,6 @@ jobs:
         pre-commit install
         pre-commit run --all-files
 
-    # - name: Pytest
-    #   run: |
-    #     test-fetch-data
+    - name: Pytest
+      run: |
+        make tests
