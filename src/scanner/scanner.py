@@ -173,7 +173,7 @@ class EpiScanner:
             df = pd.read_sql_query(query, conn, index_col="id")
 
         df.data_iniSE = pd.to_datetime(df.data_iniSE)
-        df.set_index("data_iniSE", inplace=True)
+        df.set_index("data_iniSE", inplace=True, drop=True)
         return df
 
     def _filter_city(self, geocode):
