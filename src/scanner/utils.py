@@ -52,6 +52,10 @@ STATES = {
 def get_municipality_name(geocode: Union[str, int]) -> str:
     """
     returns municipality name by retrieving data from IBGE API
+
+    Parameters
+    ----------
+    geocode: 7 digits geocode in IBGE format
     """
     api = "https://servicodados.ibge.gov.br/api/v1/localidades/municipios/%s"
 
