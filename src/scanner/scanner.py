@@ -11,7 +11,14 @@ from loguru import logger
 from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
 
-from .utils import CACHEPATH, STATES, get_SIR_pars, otim
+from .utils import (
+    CACHEPATH,
+    STATES,
+    comp_duration,
+    get_municipality_name,
+    get_SIR_pars,
+    otim,
+)
 
 
 def make_connection() -> Engine:
@@ -184,11 +191,23 @@ class EpiScanner:
                 "sir_pars": get_SIR_pars(results.params.valuesdict()),
             }
         )
-        self.curves[geocode].append({"year": year, "df": curve})
+        self.curves[geocode].append(
+            {
+                "year": year,
+                "df": curve,
+                "residuals": abs(curve.richards - curve.casos_cum),
+                "sum_res": (
+                    sum(abs(curve.richards - curve.casos_cum))
+                    / max(curve.casos_cum)
+                ),
+                "ep_time": comp_duration(curve),
+            }
+        )
 
     def _parse_results(self) -> pd.DataFrame:
         data = {
             "geocode": [],
+            "muni_name": [],
             "year": [],
             "peak_week": [],
             "beta": [],
@@ -196,11 +215,16 @@ class EpiScanner:
             "R0": [],
             "total_cases": [],
             "alpha": [],
+            "sum_res": [],
+            "ep_ini": [],
+            "ep_end": [],
+            "ep_dur": [],
         }
 
         for gc, curve in self.curves.items():
             for c in curve:
                 data["geocode"].append(gc)
+                data["muni_name"].append(get_municipality_name(gc))
                 data["year"].append(c["year"])
                 params = [
                     p["params"]
@@ -218,6 +242,12 @@ class EpiScanner:
                 data["beta"].append(sir_params["beta"])
                 data["gamma"].append(sir_params["gamma"])
                 data["R0"].append(sir_params["R0"])
+                data["sum_res"].append(c["sum_res"])
+
+                ep_duration = c["ep_time"]
+                data["ep_ini"].append(ep_duration["ini"])
+                data["ep_end"].append(ep_duration["end"])
+                data["ep_dur"].append(ep_duration["dur"])
 
         return pd.DataFrame(data)
 

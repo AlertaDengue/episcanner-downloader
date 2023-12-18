@@ -329,6 +329,17 @@ files = [
 ]
 
 [[package]]
+name = "epiweeks"
+version = "2.3.0"
+description = "Epidemiological weeks calculation based on the US CDC (MMWR) and ISO week numbering systems"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "epiweeks-2.3.0-py3-none-any.whl", hash = "sha256:e60f31f0bb7021cb62d6a366fc90b69798b3f78b2aa929ad78709be9e0cb35a8"},
+    {file = "epiweeks-2.3.0.tar.gz", hash = "sha256:3c64ee0b217d0a03f0896fce3c35b73c848c3717790504893cb4eb61b9364bac"},
+]
+
+[[package]]
 name = "exceptiongroup"
 version = "1.2.0"
 description = "Backport of PEP 654 (exception groups)"
@@ -1462,4 +1473,4 @@ dev = ["black (>=19.3b0)", "pytest (>=4.6.2)"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.13"
-content-hash = "b95a5cd4123079a5fa53f2501e94b6e01ddd011e8704d6039fcdb02e011ad7db"
+content-hash = "bea8c3b15d1db4795870d11a5b869479c7fa1456615c07ee934cf782b50d7ece"

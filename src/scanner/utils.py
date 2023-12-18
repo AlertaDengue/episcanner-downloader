@@ -1,8 +1,13 @@
+import json
 import os
 import pathlib
+from typing import Union
 
 import lmfit as lm
 import numpy as np
+import pandas as pd
+import requests
+from epiweeks import Week
 from lmfit import Parameters
 
 CACHEPATH = os.getenv(
@@ -42,6 +47,20 @@ STATES = {
     "SP": "São Paulo",
     "TO": "Tocantins",
 }
+
+
+def get_municipality_name(geocode: Union[str, int]) -> str:
+    """
+    returns municipality name by retrieving data from IBGE API
+    """
+    api = "https://servicodados.ibge.gov.br/api/v1/localidades/municipios/%s"
+
+    res = requests.get(api % str(geocode))
+
+    try:
+        return json.loads(res.text)["microrregiao"]["nome"]
+    except TypeError:
+        raise ValueError(f"Geocode {geocode} not found")
 
 
 # Richards Model
@@ -85,11 +104,36 @@ def get_SIR_pars(rp: dict):
     return pars
 
 
+def comp_duration(curve):
+    """
+    This function computes an estimation of the epidemic beginning,
+    duration and end based of the peak of richards model estimated;
+    """
+
+    df_aux = pd.DataFrame()
+
+    df_aux["dates"] = curve.iloc[:52].data_iniSE
+    df_aux["SE"] = [Week.fromdate(i).cdcformat() for i in df_aux["dates"]]
+    df_aux["diff_richards"] = np.concatenate(
+        ([0], np.diff(curve.richards)), axis=0
+    )
+
+    max_c = df_aux["diff_richards"].max()
+    df_aux = df_aux.loc[df_aux.diff_richards >= (0.05) * max_c].sort_index()
+
+    ini = str(df_aux["SE"].values[0])
+    end = str(df_aux["SE"].values[-1])
+    dur = int(end[-2:]) - int(ini[-2:])
+
+    ep_dur = {"ini": ini, "end": end, "dur": dur}
+    return ep_dur
+
+
 def otim(df, t_ini, t_fin, verbose=False):
     df.reset_index(inplace=True)
     df["casos_cum"] = df.casos.cumsum()
     params = Parameters()
-    params.add("gamma", min=0.95, max=1.05)
+    params.add("gamma", min=0.3, max=0.33)
     params.add("L1", min=1.0, max=5e5)
     params.add("tp1", min=5, max=35)
     params.add("b1", min=1e-6, max=1)
