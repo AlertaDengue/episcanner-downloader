@@ -48,7 +48,7 @@ jobs:
       run: poetry run build
 
     - name: Package binary
-      run: zip -j episcanner.zip dist/episcanner
+      run: tar -czvf dist/episcanner.tar.gz -C dist/ episcanner
 
     - name: Test release
       if: ${{ github.event_name != 'workflow_dispatch' }}

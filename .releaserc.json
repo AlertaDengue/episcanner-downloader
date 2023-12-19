@@ -56,6 +56,12 @@
         }
       ],
       [
+        "@semantic-release/github",
+        {
+          "assets": ["dist/*.whl", "dist/*.tar.gz"]
+        }
+      ],
+      [
         "@semantic-release/git",
         {
           "assets": [
