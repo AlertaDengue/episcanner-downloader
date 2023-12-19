@@ -86,7 +86,6 @@ class EpiScanner:
         self.uf = uf
         self.verbose = verbose
         self.data = self._get_alerta_table()
-        self.window = int(self.data.SE.max() % 100)
 
         asyncio.run(self._scan_all())
 
@@ -260,6 +259,7 @@ class EpiScanner:
                 logger.info(f"Scanning year {y}")
 
             dfy = df[df.year == y]
+            window = int(max([str(x)[-2:] for x in dfy.SE]))
             has_transmission = dfy.transmissao.sum() > 3
 
             if not has_transmission:
@@ -273,9 +273,9 @@ class EpiScanner:
                 return
 
             out, curve = otim(
-                dfy[["casos", "casos_cum"]].iloc[0 : self.window],  # NOQA E203
+                dfy[["casos", "casos_cum"]].iloc[0:window],  # NOQA E203
                 0,
-                self.window,
+                window,
             )
 
             self._save_results(geocode, y, out, curve)
