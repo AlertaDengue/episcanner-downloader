@@ -1,4 +1,3 @@
-import json
 import os
 import pathlib
 from typing import Union
@@ -6,12 +5,10 @@ from typing import Union
 import lmfit as lm
 import numpy as np
 import pandas as pd
-import requests
 from epiweeks import Week
 from lmfit import Parameters
 
 from ._mun_by_geocode import NAME_BY_GEOCODE
-
 
 CACHEPATH = os.getenv(
     "EPISCANNER_CACHEPATH",
