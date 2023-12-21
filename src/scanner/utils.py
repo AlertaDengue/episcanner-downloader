@@ -10,6 +10,9 @@ import requests
 from epiweeks import Week
 from lmfit import Parameters
 
+from ._mun_by_geocode import NAME_BY_GEOCODE
+
+
 CACHEPATH = os.getenv(
     "EPISCANNER_CACHEPATH",
     os.path.join(str(pathlib.Path.home()), "episcanner"),
@@ -51,20 +54,13 @@ STATES = {
 
 def get_municipality_name(geocode: Union[str, int]) -> str:
     """
-    returns municipality name by retrieving data from IBGE API
+    returns municipality name by geocode, according to IBGE's geocode format
 
     Parameters
     ----------
     geocode: 7 digits geocode in IBGE format
     """
-    api = "https://servicodados.ibge.gov.br/api/v1/localidades/municipios/%s"
-
-    res = requests.get(api % str(geocode))
-
-    try:
-        return json.loads(res.text)["microrregiao"]["nome"]
-    except TypeError:
-        raise ValueError(f"Geocode {geocode} not found")
+    return NAME_BY_GEOCODE[geocode]
 
 
 # Richards Model
