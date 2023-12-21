@@ -1,15 +1,28 @@
 """
-python src/scanner/cli.py -a -d dengue zika -f csv -v
+python src/scanner/cli.py -y 2023 -a -d dengue zika -f csv -v
 
-python src/scanner/cli.py -s SP RJ DF -d dengue zika -f csv parquet duckdb
+python src/scanner/cli.py -y 2010 -s SP RJ -d dengue zika -f csv parquet duckdb
 
-python src/scanner/cli.py -s SP -d zika -f csv -o /tmp
+python src/scanner/cli.py -y 2020 2021 2022 -s SP -d zika -f csv -o /tmp
 """
 
 import argparse
+import datetime
 
 from src.scanner.scanner import EpiScanner
 from src.scanner.utils import CACHEPATH, STATES
+
+
+class YearsAction(argparse.Action):
+    def __call__(self, parser, namespace, values, option_string=None):
+        cur_year = datetime.datetime.now().year
+        for value in values:
+            if int(value) < 2010 or int(value) > cur_year:
+                raise argparse.ArgumentError(
+                    self,
+                    f"Invalid year: {value}. " f"Options: 2010 to {cur_year}",
+                )
+        setattr(namespace, self.dest, list(map(lambda x: x.lower(), values)))
 
 
 class StatesAction(argparse.Action):
@@ -47,6 +60,19 @@ class OutputDataTypeAction(argparse.Action):
 def app():
     parser = argparse.ArgumentParser(
         description="Export EpiScanner data to duckdb, csv and parquet"
+    )
+
+    parser.add_argument(
+        "-y",
+        "--years",
+        nargs="+",
+        action=StatesAction,
+        help="""
+            Years to be scanned.
+            Example:
+            -y 2011 2022
+            """,
+        required=True,
     )
 
     parser.add_argument(
@@ -117,16 +143,23 @@ def app():
             "-s/--states OR -a/--all"
         )
 
-    for disease in args.diseases:
-        for format in args.file_format:
-            if args.all:
-                for state in STATES:
-                    EpiScanner(disease, state, args.verbose).export(
-                        format, args.output_dir
-                    )
-                break
+    for year in args.years:
+        for disease in args.diseases:
+            for format in args.file_format:
+                if args.all:
+                    for state in STATES:
+                        EpiScanner(
+                            disease=disease,
+                            uf=state,
+                            year=year,
+                            verbose=args.verbose,
+                        ).export(to=format, output_dir=args.output_dir)
+                    break
 
-            for state in args.states:
-                EpiScanner(disease, state, args.verbose).export(
-                    format, args.output_dir
-                )
+                for state in args.states:
+                    EpiScanner(
+                        disease=disease,
+                        uf=state,
+                        year=year,
+                        verbose=args.verbose,
+                    ).export(to=format, output_dir=args.output_dir)

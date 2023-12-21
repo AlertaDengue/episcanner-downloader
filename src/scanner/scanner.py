@@ -1,5 +1,5 @@
-import os
 import asyncio
+import os
 from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
@@ -145,7 +145,7 @@ class EpiScanner:
                     self._to_duckdb(output_dir)
                     file = output_dir / "episcanner.duckdb"
 
-            logger.info(f"Data exported successfully to {file}")
+            logger.info(f"{self.uf} data for {self.year} wrote to {file}")
         except (FileNotFoundError, PermissionError) as e:
             raise ValueError(f"Failed to write file: {e}")
         except Exception as e:
@@ -234,14 +234,8 @@ class EpiScanner:
                 data["geocode"].append(gc)
                 data["muni_name"].append(get_municipality_name(gc))
                 data["year"].append(c["year"])
-                params = [
-                    p["params"]
-                    for p in self.results[gc]
-                ][0]
-                sir_params = [
-                    p["sir_pars"]
-                    for p in self.results[gc]
-                ][0]
+                params = [p["params"] for p in self.results[gc]][0]
+                sir_params = [p["sir_pars"] for p in self.results[gc]][0]
                 data["peak_week"].append(params["tp1"])
                 data["total_cases"].append(params["L1"])
                 data["alpha"].append(params["a1"])
@@ -318,18 +312,16 @@ class EpiScanner:
                 ).fetchone()[0]
 
                 if rows > 0:
+                    if self.verbose:
+                        logger.warning(f"Overriding data for {self.year}")
                     con.execute(
                         f"DELETE FROM '{table_name}'"
                         f" WHERE year = {self.year}"
                     )
-                con.execute(
-                    f"INSERT INTO '{table_name}' SELECT * FROM df"
-                )
+                con.execute(f"INSERT INTO '{table_name}' SELECT * FROM df")
             except duckdb.duckdb.CatalogException:
                 # table doesn't exist
-                con.execute(
-                    f"CREATE TABLE '{table_name}' AS SELECT * FROM df"
-                )
+                con.execute(f"CREATE TABLE '{table_name}' AS SELECT * FROM df")
         finally:
             con.unregister("df")
             con.close()

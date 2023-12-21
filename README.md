@@ -66,8 +66,8 @@ To use Episcanner Downloader, follow these steps:
 ```shell
    cd dist/
    ./episcanner -h
-   ./episcanner -s RJ -d dengue -o /tmp -f duckdb
-   ./episcanner --all -d zika -o /tmp -f csv parquet --verbose
+   ./episcanner -y 2023 -s RJ -d dengue -o /tmp -f duckdb
+   ./episcanner -y 2021 2022 2023 --all -d zika -f csv parquet --verbose
 ``` 
 *Replace <source> with the desired source (e.g., 'MG', or '--all' to download all states) and <diseases> with the specific diseases you want to download (e.g., 'dengue chikungunya'). Specify the <output_directory> where the data should be saved.*
 
