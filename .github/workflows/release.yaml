@@ -44,12 +44,6 @@ jobs:
     - name: Install dependencies
       run: poetry install
 
-    - name: Build binary
-      run: poetry run build
-
-    - name: Package binary
-      run: tar -czvf dist/episcanner.tar.gz -C dist/ episcanner
-
     - name: Test release
       if: ${{ github.event_name != 'workflow_dispatch' }}
       env:

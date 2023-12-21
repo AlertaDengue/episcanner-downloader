@@ -31,9 +31,9 @@ To install Episcanner Downloader, follow these steps:
 ```shell
    conda activate episcanner-downloader
 ``` 
-3. Build the binary using Poetry:
+3. Install the dependencies using Poetry:
 ```shell
-   poetry run build
+   poetry install
 ``` 
 ### Using a Virtual Environment (venv)
 1. Create a virtual environment:
@@ -44,9 +44,9 @@ To install Episcanner Downloader, follow these steps:
 ```shell
    source env/bin/activate
 ```
-3. Build the binary using Poetry:
+3. Install the dependencies using Poetry:
 ```shell
-   poetry run build
+   poetry install
 ``` 
 ## Setting Environment Variables
 Before running Episcanner Downloader, make sure to set the required environment variables for connecting to the PSQL database. You can use the provided Makefile to create a .env file with the exported variables:

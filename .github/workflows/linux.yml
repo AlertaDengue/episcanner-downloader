@@ -2,11 +2,6 @@ name: EpiScanner Build
 
 on: [pull_request]
 
-env:
-  HOST_GID: 1000
-  HOST_UID: 1000
-  ENV: prod
-
 jobs:
   build:
     runs-on: ubuntu-latest

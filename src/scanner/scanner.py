@@ -85,6 +85,7 @@ class EpiScanner:
             )
 
         cur_year = datetime.now().year
+        year = int(year)
         if year > cur_year or year < 2010:
             raise ValueError("Year must be < current year and > 2010")
 
@@ -325,6 +326,3 @@ class EpiScanner:
         finally:
             con.unregister("df")
             con.close()
-
-        if self.verbose:
-            logger.info(f"{self.uf} data wrote into {db.absolute()}")
