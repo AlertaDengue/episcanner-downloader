@@ -13,7 +13,7 @@
               "to": "return \"${nextRelease.version}\"  # changed by semantic-release",
               "results": [
                 {
-                  "file": "epi_scanner/__init__.py",
+                  "file": "src/__init__.py",
                   "hasChanged": true,
                   "numMatches": 1,
                   "numReplacements": 1
