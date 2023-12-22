@@ -8,7 +8,7 @@
         {
           "replacements": [
             {
-              "files": ["epi_scanner/__init__.py"],
+              "files": ["src/__init__.py"],
               "from": "return \".*\"  # changed by semantic-release",
               "to": "return \"${nextRelease.version}\"  # changed by semantic-release",
               "results": [
