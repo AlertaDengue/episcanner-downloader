@@ -2,21 +2,15 @@
 ENV:=$(ENV)
 
 
-.PHONY: create-dotenv
-create-dotenv:
+.PHONY: dotenv
+dotenv:
 	export HOST_UID=$$(id -u) && \
 	export HOST_GID=$$(id -g) && \
 	envsubst < env.tpl > .env
 
-# Export data for all states and diseases to Parquet files in the default output directory
-.PHONY:fetch-data
-fetch-data:
-	python epi_scanner/downloader/export_data.py -s all -d dengue chikungunya
-
-#  Run pytest for all tests in epi_scanner/tests inside the container
-.PHONY:test-fetch-data
-test-fetch-data:
-	pytest -vv epi_scanner/tests
+.PHONY:tests
+tests:
+	pytest -vv src/tests
 
 .PHONY: clean
 clean: ## clean all artifacts

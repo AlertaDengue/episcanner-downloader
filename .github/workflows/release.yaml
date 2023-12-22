@@ -41,6 +41,9 @@ jobs:
       with:
         node-version: 18
 
+    - name: Install dependencies
+      run: poetry install
+
     - name: Test release
       if: ${{ github.event_name != 'workflow_dispatch' }}
       env:

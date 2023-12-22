@@ -2,11 +2,6 @@ name: EpiScanner Build
 
 on: [pull_request]
 
-env:
-  HOST_GID: 1000
-  HOST_UID: 1000
-  ENV: prod
-
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -52,6 +47,6 @@ jobs:
         pre-commit install
         pre-commit run --all-files
 
-    # - name: Pytest
-    #   run: |
-    #     test-fetch-data
+    - name: Pytest
+      run: |
+        make tests
