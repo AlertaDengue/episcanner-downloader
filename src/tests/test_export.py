@@ -386,13 +386,53 @@ class TestEpiScanner(unittest.TestCase):
                 expected_parquet.unlink(missing_ok=True)
 
             expected_duckdb = Path("/tmp/episcanner.duckdb")
+            expected_schema = [
+                ("disease", "STRING", None, None, None, None, None),
+                ("CID10", "STRING", None, None, None, None, None),
+                ("year", "NUMBER", None, None, None, None, None),
+                ("geocode", "NUMBER", None, None, None, None, None),
+                ("muni_name", "STRING", None, None, None, None, None),
+                ("peak_week", "NUMBER", None, None, None, None, None),
+                ("beta", "NUMBER", None, None, None, None, None),
+                ("gamma", "NUMBER", None, None, None, None, None),
+                ("R0", "NUMBER", None, None, None, None, None),
+                ("total_cases", "NUMBER", None, None, None, None, None),
+                ("alpha", "NUMBER", None, None, None, None, None),
+                ("sum_res", "NUMBER", None, None, None, None, None),
+                ("ep_ini", "STRING", None, None, None, None, None),
+                ("ep_end", "STRING", None, None, None, None, None),
+                ("ep_dur", "NUMBER", None, None, None, None, None),
+            ]
+            expected_result = {
+                "disease": {0: "dengue"},
+                "CID10": {0: "A90"},
+                "year": {0: 2010},
+                "geocode": {0: 1200401},
+                "muni_name": {0: "Rio Branco"},
+                "peak_week": {0: 15.701308253096638},
+                "beta": {0: 0.4025450947087555},
+                "gamma": {0: 0.30000000000000016},
+                "R0": {0: 1.3418169823625177},
+                "total_cases": {0: 31757.92483379216},
+                "alpha": {0: 0.25474188123680286},
+                "sum_res": {0: 3.732232796155729},
+                "ep_ini": {0: "201002"},
+                "ep_end": {0: "201040"},
+                "ep_dur": {0: 38},
+            }
+
             try:
                 x.export(to="duckdb", output_dir="/tmp")
                 self.assertTrue(expected_duckdb.exists())
                 con = duckdb.connect(str(expected_duckdb.absolute()))
                 result = con.execute("SELECT * FROM AC")
+
+                schema = result.description
                 df = result.fetchdf()
+
                 self.assertFalse(df.empty)
+                self.assertEqual(schema, expected_schema)
+                self.assertEqual(df.to_dict(), expected_result)
                 del df
 
             finally:
