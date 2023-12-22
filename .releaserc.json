@@ -67,7 +67,7 @@
           "assets": [
             "pyproject.toml",
             "CHANGELOG.md",
-            "epi_scanner/__init__.py"
+            "src/__init__.py"
           ],
           "message": "chore(release): ${nextRelease.version}"
         }
