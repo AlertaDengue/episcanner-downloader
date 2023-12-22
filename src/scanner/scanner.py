@@ -14,6 +14,7 @@ from sqlalchemy.engine import Engine
 
 from .utils import (
     CACHEPATH,
+    CID10,
     STATES,
     comp_duration,
     get_municipality_name,
@@ -215,8 +216,10 @@ class EpiScanner:
 
     def _parse_results(self) -> pd.DataFrame:
         data = {
-            "geocode": [],
+            "disease": [],
+            "CID10": [],
             "year": [],
+            "geocode": [],
             "muni_name": [],
             "peak_week": [],
             "beta": [],
@@ -232,6 +235,8 @@ class EpiScanner:
 
         for gc, curve in self.curves.items():
             for c in curve:
+                data["disease"].append(self.disease)
+                data["CID10"].append(CID10[self.disease])
                 data["geocode"].append(gc)
                 data["muni_name"].append(get_municipality_name(gc))
                 data["year"].append(c["year"])
@@ -309,7 +314,7 @@ class EpiScanner:
             try:
                 rows = con.execute(
                     f"SELECT COUNT(*) FROM '{table_name}'"
-                    f" WHERE year = {self.year}"
+                    f" WHERE year = {self.year} AND disease = '{self.disease}'"
                 ).fetchone()[0]
 
                 if rows > 0:
@@ -318,6 +323,7 @@ class EpiScanner:
                     con.execute(
                         f"DELETE FROM '{table_name}'"
                         f" WHERE year = {self.year}"
+                        f" AND disease = '{self.disease}'"
                     )
                 con.execute(f"INSERT INTO '{table_name}' SELECT * FROM df")
             except duckdb.duckdb.CatalogException:

@@ -49,6 +49,13 @@ STATES = {
 }
 
 
+CID10 = {
+    "dengue": "A90",
+    "zika": "A92.8",
+    "chik": "A92.0",
+}
+
+
 def get_municipality_name(geocode: Union[str, int]) -> str:
     """
     returns municipality name by geocode, according to IBGE's geocode format
