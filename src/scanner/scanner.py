@@ -138,14 +138,15 @@ class EpiScanner:
             file.unlink()
 
         try:
-            match format:
-                case "csv":
-                    df.to_csv(file)
-                case "parquet":
-                    df.to_parquet(file)
-                case "duckdb":
-                    self._to_duckdb(output_dir)
-                    file = output_dir / "episcanner.duckdb"
+            if format == "csv":
+                df.to_csv(file)
+
+            if format == "parquet":
+                df.to_parquet(file)
+
+            if format == "duckdb":
+                self._to_duckdb(output_dir)
+                file = output_dir / "episcanner.duckdb"
 
             logger.info(f"{self.uf} data for {self.year} wrote to {file}")
         except (FileNotFoundError, PermissionError) as e:
