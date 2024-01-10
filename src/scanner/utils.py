@@ -127,7 +127,10 @@ def comp_duration(curve):
 
     ini = str(df_aux["SE"].values[0])
     end = str(df_aux["SE"].values[-1])
-    dur = int(end[-2:]) - int(ini[-2:])
+
+    ini_aux = Week.fromstring(ini).startdate()
+    end_aux = Week.fromstring(end).startdate()
+    dur = int((end_aux - ini_aux).days / 7)
 
     ep_dur = {"ini": ini, "end": end, "dur": dur}
     return ep_dur
