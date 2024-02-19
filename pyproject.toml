@@ -10,10 +10,10 @@ homepage = "https://github.com/AlertaDengue/epi-scanner-downloader"
 packages = [{include="scanner", from="src"}]
 
 [tool.poetry.dependencies]
-python = ">=3.10,<3.12"
+python = ">=3.9,<3.11"
 pandas = ">=2.1.0"
 psutil = "^5.9.2"
-loguru = "^0.6.0"
+loguru = "^0.7.0"
 typing-extensions = "^4.4.0"
 lmfit = "^1.1.0"
 pyarrow = "^11.0.0"
