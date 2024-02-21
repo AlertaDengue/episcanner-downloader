@@ -1,6 +1,14 @@
 Release Notes
 ---
 
+## [1.0.2](https://github.com/AlertaDengue/episcanner-downloader/compare/1.0.1...1.0.2) (2024-02-21)
+
+
+### Bug Fixes
+
+* **deps:** update dependencies to match AD's deps ([#18](https://github.com/AlertaDengue/episcanner-downloader/issues/18)) ([ba7266f](https://github.com/AlertaDengue/episcanner-downloader/commit/ba7266f638d410b2d41e4568688ff131ade3898e))
+* **release:** update node version on release.yaml ([9affdae](https://github.com/AlertaDengue/episcanner-downloader/commit/9affdaefdd39dcb97b8d1dfa5604ffd45a6b2b1e))
+
 ## [1.0.1](https://github.com/AlertaDengue/episcanner-downloader/compare/1.0.0...1.0.1) (2023-12-22)
 
 
