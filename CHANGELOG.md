@@ -1,6 +1,13 @@
 Release Notes
 ---
 
+## [1.0.5](https://github.com/AlertaDengue/episcanner-downloader/compare/1.0.4...1.0.5) (2024-02-22)
+
+
+### Bug Fixes
+
+* **duckdb:** include BinderException on duckdb export ([67028a0](https://github.com/AlertaDengue/episcanner-downloader/commit/67028a0d027fb8cb27772bc90ba7728413109cbf))
+
 ## [1.0.4](https://github.com/AlertaDengue/episcanner-downloader/compare/1.0.3...1.0.4) (2024-02-22)
 
 
