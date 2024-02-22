@@ -6,9 +6,9 @@ from pathlib import Path
 from typing import Literal
 
 import duckdb
-from duckdb import BinderException, CatalogException
 import pandas as pd
 from dotenv import load_dotenv
+from duckdb import BinderException, CatalogException
 from loguru import logger
 from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
