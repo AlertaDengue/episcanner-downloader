@@ -1,6 +1,13 @@
 Release Notes
 ---
 
+## [1.0.4](https://github.com/AlertaDengue/episcanner-downloader/compare/1.0.3...1.0.4) (2024-02-22)
+
+
+### Bug Fixes
+
+* **pandas:** fix Cursor AttributeError from pd.read_sql ([ee9df15](https://github.com/AlertaDengue/episcanner-downloader/commit/ee9df15f6520942899ba2bddeafd5126b87c5417))
+
 ## [1.0.3](https://github.com/AlertaDengue/episcanner-downloader/compare/1.0.2...1.0.3) (2024-02-21)
 
 
