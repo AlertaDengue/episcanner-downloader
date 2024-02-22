@@ -8,6 +8,7 @@ from typing import Literal
 import duckdb
 import pandas as pd
 from dotenv import load_dotenv
+from duckdb import BinderException, CatalogException
 from loguru import logger
 from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
@@ -328,7 +329,7 @@ class EpiScanner:
                         f" AND disease = '{self.disease}'"
                     )
                 con.execute(f"INSERT INTO '{table_name}' SELECT * FROM df")
-            except duckdb.duckdb.CatalogException:
+            except (CatalogException, BinderException):
                 # table doesn't exist
                 con.execute(f"CREATE TABLE '{table_name}' AS SELECT * FROM df")
         finally:
