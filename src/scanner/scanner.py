@@ -182,7 +182,8 @@ class EpiScanner:
         """
 
         with make_connection().connect() as conn:
-            df = pd.read_sql_query(query, conn, index_col="id")
+            data = conn.execute(query).fetchall()
+            df = pd.DataFrame(data)
 
         df.data_iniSE = pd.to_datetime(df.data_iniSE)
         df.set_index("data_iniSE", inplace=True, drop=True)
