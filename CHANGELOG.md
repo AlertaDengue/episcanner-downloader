@@ -1,6 +1,13 @@
 Release Notes
 ---
 
+## [1.0.6](https://github.com/AlertaDengue/episcanner-downloader/compare/1.0.5...1.0.6) (2024-04-04)
+
+
+### Bug Fixes
+
+* **duckdb:** fix wrong geocodes in UFs ([fbe335a](https://github.com/AlertaDengue/episcanner-downloader/commit/fbe335a4c69de2305d2167732e3023b947d6089f))
+
 ## [1.0.5](https://github.com/AlertaDengue/episcanner-downloader/compare/1.0.4...1.0.5) (2024-02-22)
 
 
