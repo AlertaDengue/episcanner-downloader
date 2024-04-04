@@ -45,9 +45,6 @@ def make_connection() -> Engine:
 
 
 class EpiScanner:
-    results = defaultdict(list)
-    curves = defaultdict(list)
-
     def __init__(
         self,
         disease: Literal["dengue", "zika", "chik", "chikungunya"],
@@ -91,6 +88,8 @@ class EpiScanner:
         if year > cur_year or year < 2010:
             raise ValueError("Year must be < current year and > 2010")
 
+        self.results = defaultdict(list)
+        self.curves = defaultdict(list)
         self.disease = disease
         self.uf = uf
         self.year = year
@@ -238,13 +237,6 @@ class EpiScanner:
         }
 
         for gc, curve in self.curves.items():
-            if gc not in list(self.data.municipio_geocodigo):
-                if self.verbose:
-                    logger.warning(
-                        f"{gc} doesn't belong to {self.uf}, skipping"
-                    )
-                continue
-
             for c in curve:
                 data["disease"].append(self.disease)
                 data["CID10"].append(CID10[self.disease])
@@ -269,11 +261,6 @@ class EpiScanner:
         return pd.DataFrame(data)
 
     async def _scan(self, geocode):
-        if geocode not in list(self.data.municipio_geocodigo):
-            if self.verbose:
-                logger.warning(f"skipping {geocode} from {self.uf}")
-            return
-
         df = self._filter_city(geocode)
         df = df.assign(year=[i.year for i in df.index])
 
