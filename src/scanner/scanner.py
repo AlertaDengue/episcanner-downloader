@@ -45,9 +45,6 @@ def make_connection() -> Engine:
 
 
 class EpiScanner:
-    results = defaultdict(list)
-    curves = defaultdict(list)
-
     def __init__(
         self,
         disease: Literal["dengue", "zika", "chik", "chikungunya"],
@@ -91,6 +88,8 @@ class EpiScanner:
         if year > cur_year or year < 2010:
             raise ValueError("Year must be < current year and > 2010")
 
+        self.results = defaultdict(list)
+        self.curves = defaultdict(list)
         self.disease = disease
         self.uf = uf
         self.year = year
@@ -103,7 +102,7 @@ class EpiScanner:
         self,
         to: Literal["csv", "parquet", "duckdb"],
         output_dir: str = CACHEPATH,
-    ):
+    ) -> str:
         """
         Exports the result of the Scan into a file with the format:
         [UF]_[disease].[format]
@@ -124,7 +123,7 @@ class EpiScanner:
                 "Options: csv, parquet or duckdb"
             )
 
-        output_dir = Path(output_dir)
+        output_dir: Path = Path(output_dir)
         output_dir.mkdir(parents=True, exist_ok=True)
 
         file_name = (
@@ -146,14 +145,15 @@ class EpiScanner:
                 df.to_parquet(file)
 
             if format == "duckdb":
-                self._to_duckdb(output_dir)
-                file = output_dir / "episcanner.duckdb"
+                file = self._to_duckdb(df, str(output_dir.absolute()))
 
             logger.info(f"{self.uf} data for {self.year} wrote to {file}")
         except (FileNotFoundError, PermissionError) as e:
             raise ValueError(f"Failed to write file: {e}")
         except Exception as e:
             raise ValueError(f"Unexpected error while writing file: {e}")
+
+        return str(file.absolute())
 
     def _get_alerta_table(self) -> pd.DataFrame:
         """
@@ -297,26 +297,21 @@ class EpiScanner:
                 )
 
     async def _scan_all_geocodes(self):
-        tasks = [
-            self._scan(geocode)
-            for geocode in self.data.municipio_geocodigo.unique()
-        ]
+        tasks = []
+        for geocode in self.data.municipio_geocodigo.unique():
+            tasks.append(self._scan(geocode))
         await asyncio.gather(*tasks)
 
-    def _to_duckdb(self, output_dir: str):
-        output_dir = Path(output_dir)
-        db = output_dir / "episcanner.duckdb"
-
-        df = self._parse_results()
-        table_name = self.uf
+    def _to_duckdb(self, df: pd.DataFrame, output_dir: str) -> Path:
+        db = Path(output_dir) / "episcanner.duckdb"
+        con = duckdb.connect(str(db.absolute()))
 
         try:
-            con = duckdb.connect(str(db.absolute()))
             con.register("df", df)
 
             try:
                 rows = con.execute(
-                    f"SELECT COUNT(*) FROM '{table_name}'"
+                    f"SELECT COUNT(*) FROM '{self.uf}'"
                     f" WHERE year = {self.year} AND disease = '{self.disease}'"
                 ).fetchone()[0]
 
@@ -324,14 +319,16 @@ class EpiScanner:
                     if self.verbose:
                         logger.warning(f"Overriding data for {self.year}")
                     con.execute(
-                        f"DELETE FROM '{table_name}'"
+                        f"DELETE FROM '{self.uf}'"
                         f" WHERE year = {self.year}"
                         f" AND disease = '{self.disease}'"
                     )
-                con.execute(f"INSERT INTO '{table_name}' SELECT * FROM df")
+                con.execute(f"INSERT INTO '{self.uf}' SELECT * FROM df")
             except (CatalogException, BinderException):
                 # table doesn't exist
-                con.execute(f"CREATE TABLE '{table_name}' AS SELECT * FROM df")
+                con.execute(f"CREATE TABLE '{self.uf}' AS SELECT * FROM df")
         finally:
             con.unregister("df")
             con.close()
+
+        return db
