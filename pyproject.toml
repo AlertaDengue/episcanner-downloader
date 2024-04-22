@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "Episcanner-downloader"
-version = "1.0.6"  # changed by semantic-release
+version = "1.0.7"  # changed by semantic-release
 description = "Dashboard quickstart template"
 authors = ["Flávio Codeço Coelho <fccoelho@gmail.com>"]
 license = "MIT"

@@ -1,6 +1,13 @@
 Release Notes
 ---
 
+## [1.0.7](https://github.com/AlertaDengue/episcanner-downloader/compare/1.0.6...1.0.7) (2024-04-22)
+
+
+### Bug Fixes
+
+* **sql:** include IF NOT EXISTS on create table statement ([9fbd7b6](https://github.com/AlertaDengue/episcanner-downloader/commit/9fbd7b612bb39c133a5a0e5d94a376ac47bf65c7))
+
 ## [1.0.6](https://github.com/AlertaDengue/episcanner-downloader/compare/1.0.5...1.0.6) (2024-04-04)
 
 
