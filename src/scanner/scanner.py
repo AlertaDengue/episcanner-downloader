@@ -326,7 +326,10 @@ class EpiScanner:
                 con.execute(f"INSERT INTO '{self.uf}' SELECT * FROM df")
             except (CatalogException, BinderException):
                 # table doesn't exist
-                con.execute(f"CREATE TABLE '{self.uf}' AS SELECT * FROM df")
+                con.execute(
+                    f"CREATE TABLE IF NOT EXISTS '{self.uf}' "
+                    "AS SELECT * FROM df"
+                )
         finally:
             con.unregister("df")
             con.close()
