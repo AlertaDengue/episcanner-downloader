@@ -8,6 +8,7 @@ from typing import Literal
 
 import duckdb
 import pandas as pd
+from config import CUM_CASES, N_WEEKS, THR_PROB
 from dotenv import load_dotenv
 from duckdb import BinderException, CatalogException
 from loguru import logger
@@ -194,7 +195,6 @@ class EpiScanner:
     def _filter_city(self, geocode):
         dfcity = self.data[self.data.municipio_geocodigo == geocode].copy()
         dfcity.sort_index(inplace=True)
-        # dfcity["casos_cum"] = dfcity.casos.cumsum()
         return dfcity
 
     def _save_results(self, geocode, results, curve):
@@ -269,26 +269,25 @@ class EpiScanner:
         df = self._filter_city(geocode)
         df = df.assign(year=[i.year for i in df.index])
 
-        # dfy = df[df.year == self.year]
         dfy = df[
             (df.index >= f"{self.year-1}-11-01")
             & (df.index <= f"{self.year}-09-01")
         ]
 
         # has_transmission = dfy.transmissao.sum() > 3
-        has_transmission = ((dfy.p_rt1 > 0.9).astype(int).sum() > 3) & (
-            dfy.casos.sum() > 50
-        )
+        has_transmission = (
+            (dfy.p_rt1 > THR_PROB).astype(int).sum() > N_WEEKS
+        ) & (dfy.casos.sum() > CUM_CASES)
 
         if not has_transmission:
             if self.verbose:
                 logger.info(
                     f"""
-                    There were less than 3 weeks in which the probability
-                    of the Rt>1 was bigger than  0.9, or less than 50
-                    cumulative cases between November
-                    of the last year and September
-                    in {geocode}.\nSkipping analysis
+                    There were less than {N_WEEKS} weeks in which the
+                    probability of the Rt>1 was bigger than {THR_PROB},
+                    or less than {CUM_CASES} cumulative cases
+                    between November of last year
+                    and September in {geocode}.\nSkipping analysis
                     """
                 )
             return
