@@ -1,7 +1,8 @@
 import asyncio
 import os
 from collections import defaultdict
-from datetime import datetime
+
+# from datetime import datetime
 from pathlib import Path
 from typing import Literal
 
@@ -83,10 +84,10 @@ class EpiScanner:
                 f"Unknown uf {uf}. Options: {list(STATES.keys())}"
             )
 
-        cur_year = datetime.now().year
+        # cur_year = datetime.now().year
         year = int(year)
-        if year > cur_year or year < 2010:
-            raise ValueError("Year must be < current year and > 2010")
+        if year < 2011:
+            raise ValueError("Year must be > 2011")
 
         self.results = defaultdict(list)
         self.curves = defaultdict(list)
@@ -193,7 +194,7 @@ class EpiScanner:
     def _filter_city(self, geocode):
         dfcity = self.data[self.data.municipio_geocodigo == geocode].copy()
         dfcity.sort_index(inplace=True)
-        dfcity["casos_cum"] = dfcity.casos.cumsum()
+        # dfcity["casos_cum"] = dfcity.casos.cumsum()
         return dfcity
 
     def _save_results(self, geocode, results, curve):
@@ -234,6 +235,8 @@ class EpiScanner:
             "ep_ini": [],
             "ep_end": [],
             "ep_dur": [],
+            "t_ini": [],
+            "t_end": [],
         }
 
         for gc, curve in self.curves.items():
@@ -254,6 +257,8 @@ class EpiScanner:
                 data["sum_res"].append(c["sum_res"])
 
                 ep_duration = c["ep_time"]
+                data["t_ini"].append(ep_duration["t_ini"])
+                data["t_end"].append(ep_duration["t_end"])
                 data["ep_ini"].append(ep_duration["ini"])
                 data["ep_end"].append(ep_duration["end"])
                 data["ep_dur"].append(ep_duration["dur"])
@@ -264,24 +269,35 @@ class EpiScanner:
         df = self._filter_city(geocode)
         df = df.assign(year=[i.year for i in df.index])
 
-        dfy = df[df.year == self.year]
-        window = int(max([str(x)[-2:] for x in dfy.SE]))
-        has_transmission = dfy.transmissao.sum() > 3
+        # dfy = df[df.year == self.year]
+        dfy = df[
+            (df.index >= f"{self.year-1}-11-01")
+            & (df.index <= f"{self.year}-09-01")
+        ]
+
+        # has_transmission = dfy.transmissao.sum() > 3
+        has_transmission = ((dfy.p_rt1 > 0.9).astype(int).sum() > 3) & (
+            dfy.casos.sum() > 50
+        )
 
         if not has_transmission:
             if self.verbose:
                 logger.info(
                     f"""
-                    There were less than 3 weeks with Rt>1
+                    There were less than 3 weeks in which the probability
+                    of the Rt>1 was bigger than  0.9, or less than 50
+                    cumulative cases between November
+                    of the last year and September
                     in {geocode}.\nSkipping analysis
                     """
                 )
             return
 
+        df_otim = df[
+            (df.year == self.year - 1) | (df.year == self.year)
+        ].sort_index()
         out, curve = otim(
-            df[["casos", "casos_cum"]].iloc[0:window],  # NOQA E203
-            0,
-            window,
+            df_otim[["casos"]].iloc[44 : 44 + 52],  # NOQA E203
         )
 
         self._save_results(geocode, out, curve)
