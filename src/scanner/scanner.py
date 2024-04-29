@@ -8,13 +8,13 @@ from typing import Literal
 
 import duckdb
 import pandas as pd
-from config import CUM_CASES, N_WEEKS, THR_PROB
 from dotenv import load_dotenv
 from duckdb import BinderException, CatalogException
 from loguru import logger
 from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
 
+from .config import CUM_CASES, N_WEEKS, THR_PROB
 from .utils import (
     CACHEPATH,
     CID10,
