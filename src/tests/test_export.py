@@ -360,7 +360,7 @@ class TestEpiScanner(unittest.TestCase):
         }
 
         with patch("scanner.scanner.EpiScanner", return_value=mock_episcanner):
-            x = EpiScanner("dengue", "AC", "2010")
+            x = EpiScanner("dengue", "AC", "2011")
             x.data = mock_episcanner.data
             x.results = mock_episcanner.results
             x.curves = mock_episcanner.curves
