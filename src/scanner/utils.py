@@ -1,5 +1,6 @@
 import os
 import pathlib
+from datetime import timedelta
 from typing import Union
 
 import lmfit as lm
@@ -108,16 +109,26 @@ def get_SIR_pars(rp: dict):
     return pars
 
 
-def comp_duration(curve):
+def comp_duration(curve, tj):
     """
     This function computes an estimation of the epidemic beginning,
     duration and end based of the peak of richards model estimated;
+
+    curve: pd.DataFrame. Output of the otim function;
+    tj: float. Peak estimated in the otim function. This parameter is used
+               to return the calendar peak week.
     """
 
     df_aux = pd.DataFrame()
 
     df_aux["dates"] = curve.iloc[:52].data_iniSE
     df_aux["SE"] = [Week.fromdate(i).cdcformat() for i in df_aux["dates"]]
+
+    pw_date = Week.fromstring(str(df_aux.SE[0])).startdate() + timedelta(
+        days=7
+    ) * int(round(tj, 0))
+    pw = Week.fromdate(pw_date).cdcformat()
+
     df_aux["diff_richards"] = np.concatenate(
         ([0], np.diff(curve.richards)), axis=0
     )
@@ -137,8 +148,20 @@ def comp_duration(curve):
     t_ini = np.where(curve.data_iniSE.values == df_aux.dates.values[0])[0][0]
     t_end = np.where(curve.data_iniSE.values == df_aux.dates.values[-1])[0][0]
 
+    if (
+        Week.fromstring(str(pw)).startdate() - Week.fromstring(end).startdate()
+    ).days >= 0:
+        # this happens when predicting the current year if the peak
+        # estimated is after the last data point. In this case we can't
+        # estimate the begin and end.
+        ini = np.nan
+        end = np.nan
+        t_ini = np.nan
+        t_end = np.nan
+
     ep_dur = {
         "ini": ini,
+        "pw": pw,
         "end": end,
         "dur": dur,
         "t_ini": t_ini,

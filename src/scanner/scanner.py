@@ -180,7 +180,7 @@ class EpiScanner:
             JOIN "Dengue_global"."Municipio" municipio
             ON historico.municipio_geocodigo=municipio.geocodigo
             WHERE municipio.uf='{state_name}'
-            AND EXTRACT(YEAR FROM "data_iniSE") = {self.year}
+            AND EXTRACT(YEAR FROM "data_iniSE") IN ({self.year-1}, {self.year})
             ORDER BY "data_iniSE" DESC;
         """
 
@@ -214,7 +214,9 @@ class EpiScanner:
                     sum(abs(curve.richards - curve.casos_cum))
                     / max(curve.casos_cum)
                 ),
-                "ep_time": comp_duration(curve),
+                "ep_time": comp_duration(
+                    curve, results.params.valuesdict()["tp1"]
+                ),
             }
         )
 
@@ -233,6 +235,7 @@ class EpiScanner:
             "alpha": [],
             "sum_res": [],
             "ep_ini": [],
+            "ep_pw": [],
             "ep_end": [],
             "ep_dur": [],
             "t_ini": [],
@@ -260,6 +263,7 @@ class EpiScanner:
                 data["t_ini"].append(ep_duration["t_ini"])
                 data["t_end"].append(ep_duration["t_end"])
                 data["ep_ini"].append(ep_duration["ini"])
+                data["ep_pw"].append(ep_duration["pw"])
                 data["ep_end"].append(ep_duration["end"])
                 data["ep_dur"].append(ep_duration["dur"])
 
@@ -295,6 +299,7 @@ class EpiScanner:
         df_otim = df[
             (df.year == self.year - 1) | (df.year == self.year)
         ].sort_index()
+
         out, curve = otim(
             df_otim[["casos"]].iloc[44 : 44 + 52],  # NOQA E203
         )
