@@ -14,7 +14,7 @@ from loguru import logger
 from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
 
-from .config import CUM_CASES, N_WEEKS, THR_PROB
+from .config import CUM_CASES, MIN_YEAR, N_WEEKS, THR_PROB
 from .utils import (
     CACHEPATH,
     CID10,
@@ -87,8 +87,8 @@ class EpiScanner:
 
         # cur_year = datetime.now().year
         year = int(year)
-        if year < 2011:
-            raise ValueError("Year must be > 2011")
+        if year < MIN_YEAR:
+            raise ValueError(f"Year must be > {MIN_YEAR}")
 
         self.results = defaultdict(list)
         self.curves = defaultdict(list)
