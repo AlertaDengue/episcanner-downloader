@@ -1,7 +1,8 @@
 import asyncio
 import os
 from collections import defaultdict
-from datetime import datetime
+
+# from datetime import datetime
 from pathlib import Path
 from typing import Literal
 
@@ -13,6 +14,7 @@ from loguru import logger
 from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
 
+from .config import CUM_CASES, MIN_YEAR, N_WEEKS, THR_PROB
 from .utils import (
     CACHEPATH,
     CID10,
@@ -83,10 +85,10 @@ class EpiScanner:
                 f"Unknown uf {uf}. Options: {list(STATES.keys())}"
             )
 
-        cur_year = datetime.now().year
+        # cur_year = datetime.now().year
         year = int(year)
-        if year > cur_year or year < 2010:
-            raise ValueError("Year must be < current year and > 2010")
+        if year < MIN_YEAR:
+            raise ValueError(f"Year must be > {MIN_YEAR}")
 
         self.results = defaultdict(list)
         self.curves = defaultdict(list)
@@ -178,7 +180,7 @@ class EpiScanner:
             JOIN "Dengue_global"."Municipio" municipio
             ON historico.municipio_geocodigo=municipio.geocodigo
             WHERE municipio.uf='{state_name}'
-            AND EXTRACT(YEAR FROM "data_iniSE") = {self.year}
+            AND EXTRACT(YEAR FROM "data_iniSE") IN ({self.year-1}, {self.year})
             ORDER BY "data_iniSE" DESC;
         """
 
@@ -193,7 +195,6 @@ class EpiScanner:
     def _filter_city(self, geocode):
         dfcity = self.data[self.data.municipio_geocodigo == geocode].copy()
         dfcity.sort_index(inplace=True)
-        dfcity["casos_cum"] = dfcity.casos.cumsum()
         return dfcity
 
     def _save_results(self, geocode, results, curve):
@@ -213,7 +214,9 @@ class EpiScanner:
                     sum(abs(curve.richards - curve.casos_cum))
                     / max(curve.casos_cum)
                 ),
-                "ep_time": comp_duration(curve),
+                "ep_time": comp_duration(
+                    curve, results.params.valuesdict()["tp1"]
+                ),
             }
         )
 
@@ -232,8 +235,11 @@ class EpiScanner:
             "alpha": [],
             "sum_res": [],
             "ep_ini": [],
+            "ep_pw": [],
             "ep_end": [],
             "ep_dur": [],
+            "t_ini": [],
+            "t_end": [],
         }
 
         for gc, curve in self.curves.items():
@@ -254,7 +260,10 @@ class EpiScanner:
                 data["sum_res"].append(c["sum_res"])
 
                 ep_duration = c["ep_time"]
+                data["t_ini"].append(ep_duration["t_ini"])
+                data["t_end"].append(ep_duration["t_end"])
                 data["ep_ini"].append(ep_duration["ini"])
+                data["ep_pw"].append(ep_duration["pw"])
                 data["ep_end"].append(ep_duration["end"])
                 data["ep_dur"].append(ep_duration["dur"])
 
@@ -264,24 +273,35 @@ class EpiScanner:
         df = self._filter_city(geocode)
         df = df.assign(year=[i.year for i in df.index])
 
-        dfy = df[df.year == self.year]
-        window = int(max([str(x)[-2:] for x in dfy.SE]))
-        has_transmission = dfy.transmissao.sum() > 3
+        dfy = df[
+            (df.index >= f"{self.year-1}-11-01")
+            & (df.index <= f"{self.year}-09-01")
+        ]
+
+        # has_transmission = dfy.transmissao.sum() > 3
+        has_transmission = (
+            (dfy.p_rt1 > THR_PROB).astype(int).sum() > N_WEEKS
+        ) & (dfy.casos.sum() > CUM_CASES)
 
         if not has_transmission:
             if self.verbose:
                 logger.info(
                     f"""
-                    There were less than 3 weeks with Rt>1
-                    in {geocode}.\nSkipping analysis
+                    There were less than {N_WEEKS} weeks in which the
+                    probability of the Rt>1 was bigger than {THR_PROB},
+                    or less than {CUM_CASES} cumulative cases
+                    between November of last year
+                    and September in {geocode}.\nSkipping analysis
                     """
                 )
             return
 
+        df_otim = df[
+            (df.year == self.year - 1) | (df.year == self.year)
+        ].sort_index()
+
         out, curve = otim(
-            df[["casos", "casos_cum"]].iloc[0:window],  # NOQA E203
-            0,
-            window,
+            df_otim[["casos"]].iloc[44 : 44 + 52],  # NOQA E203
         )
 
         self._save_results(geocode, out, curve)

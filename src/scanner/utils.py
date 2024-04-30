@@ -1,5 +1,6 @@
 import os
 import pathlib
+from datetime import timedelta
 from typing import Union
 
 import lmfit as lm
@@ -74,18 +75,18 @@ def richards(L, a, b, t, tj):
     return j
 
 
-def obj_fun(params, t_ini, t_fin, df):
+def obj_fun(params, aux, df):
     """Objective function"""
-    window = (t_fin - t_ini,)
+    window = df.shape[0]
     pars = params.valuesdict()
     L = pars["L1"]
     tp = pars["tp1"]
     a = pars["a1"]
     b = pars["b1"]
 
-    t_range = np.arange(t_fin - t_ini)
+    t_range = np.arange(window)
     richfun = richards(L, a, b, t_range, tp)
-    serie = df.loc[t_ini:t_fin].casos_cum.values
+    serie = df.casos_cum.values
 
     mse = (serie - richfun) ** 2 / window
 
@@ -108,16 +109,26 @@ def get_SIR_pars(rp: dict):
     return pars
 
 
-def comp_duration(curve):
+def comp_duration(curve, tj):
     """
     This function computes an estimation of the epidemic beginning,
     duration and end based of the peak of richards model estimated;
+
+    curve: pd.DataFrame. Output of the otim function;
+    tj: float. Peak estimated in the otim function. This parameter is used
+               to return the calendar peak week.
     """
 
     df_aux = pd.DataFrame()
 
     df_aux["dates"] = curve.iloc[:52].data_iniSE
     df_aux["SE"] = [Week.fromdate(i).cdcformat() for i in df_aux["dates"]]
+
+    pw_date = Week.fromstring(str(df_aux.SE[0])).startdate() + timedelta(
+        days=7
+    ) * int(round(tj, 0))
+    pw = Week.fromdate(pw_date).cdcformat()
+
     df_aux["diff_richards"] = np.concatenate(
         ([0], np.diff(curve.richards)), axis=0
     )
@@ -127,13 +138,40 @@ def comp_duration(curve):
 
     ini = str(df_aux["SE"].values[0])
     end = str(df_aux["SE"].values[-1])
-    dur = int(end[-2:]) - int(ini[-2:])
 
-    ep_dur = {"ini": ini, "end": end, "dur": dur}
+    # begin and end based on the week value
+    ini_aux = Week.fromstring(ini).startdate()
+    end_aux = Week.fromstring(end).startdate()
+    dur = int((end_aux - ini_aux).days / 7)
+
+    # begin and end based on the 52 window (they are integer values)
+    t_ini = np.where(curve.data_iniSE.values == df_aux.dates.values[0])[0][0]
+    t_end = np.where(curve.data_iniSE.values == df_aux.dates.values[-1])[0][0]
+
+    if (
+        Week.fromstring(str(pw)).startdate() - Week.fromstring(end).startdate()
+    ).days >= 0:
+        # this happens when predicting the current year if the peak
+        # estimated is after the last data point. In this case we can't
+        # estimate the begin and end.
+        ini = np.nan
+        end = np.nan
+        t_ini = np.nan
+        t_end = np.nan
+
+    ep_dur = {
+        "ini": ini,
+        "pw": pw,
+        "end": end,
+        "dur": dur,
+        "t_ini": t_ini,
+        "t_end": t_end,
+    }
+
     return ep_dur
 
 
-def otim(df, t_ini, t_fin, verbose=False):
+def otim(df, verbose=False):
     df.reset_index(inplace=True)
     df["casos_cum"] = df.casos.cumsum()
     params = Parameters()
@@ -143,11 +181,10 @@ def otim(df, t_ini, t_fin, verbose=False):
     params.add("b1", min=1e-6, max=1)
     params.add("a1", expr="b1/(gamma + b1)", min=0.001, max=1)
 
-    window = min(int(t_fin - t_ini), len(df))
-    t_range = np.arange(window)
+    t_range = np.arange(df.shape[0])
 
     out = lm.minimize(
-        obj_fun, params, args=(0, window, df), method="diferential_evolution"
+        obj_fun, params, args=(0, df), method="diferential_evolution"
     )
     if verbose:
         if out.success:
@@ -164,9 +201,7 @@ def otim(df, t_ini, t_fin, verbose=False):
         pars["L1"], pars["a1"], pars["b1"], t_range, pars["tp1"]
     )
 
-    df = df.iloc[:window]
-
     df = df.copy()
-    df.loc[:, "richards"] = richfun_opt + np.zeros(window)
+    df.loc[:, "richards"] = richfun_opt + np.zeros(df.shape[0])
 
     return out, df
