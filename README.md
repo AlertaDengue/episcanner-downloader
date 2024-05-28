@@ -62,14 +62,23 @@ Before running Episcanner Downloader, make sure to set the required environment 
 ## Usage
 To use Episcanner Downloader, follow these steps:
 
-1. Execute the binary (examples for Linux):
-```shell
-   cd dist/
-   ./episcanner -h
-   ./episcanner -y 2023 -s RJ -d dengue -o /tmp -f duckdb
-   ./episcanner -y 2021 2022 2023 --all -d zika -f csv parquet --verbose
-``` 
-*Replace <source> with the desired source (e.g., 'MG', or '--all' to download all states) and <diseases> with the specific diseases you want to download (e.g., 'dengue chikungunya'). Specify the <output_directory> where the data should be saved.*
+1. Open the python console or another python interpreter:
+```python
+from scanner import Episcanner
+scanner = EpiScanner(disease="dengue", uf="RJ", year=2024)
+scanner.export("duckdb")
+```
+
+*Replace `uf` with the desired state (e.g., 'MG') and `disease` with the specific disease you want to download ('dengue', 'chikungunya' or 'zika'). Specify the `output_dir` on the `export()` method to change where the data should be saved.*
+
+2. In order to read the data, open the file using `duckdb`:
+```python
+import duckdb
+db = duckdb.connect("<$HOME>/episcanner/episcanner.duckdb")
+db.execute("SELECT * FROM 'RJ' WHERE disease = 'dengue' AND year = 2024").fetchdf()
+```
+
+Replace <$HOME> with your actual home directory or use the `output_dir` specified in the export method
 
 ## License
 Episcanner Downloader is licensed under the [MIT License](https://github.com/AlertaDengue/episcanner-downloader/blob/main/LICENSE). See the LICENSE file for more details.
