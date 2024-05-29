@@ -1,6 +1,18 @@
 Release Notes
 ---
 
+## [1.0.8](https://github.com/AlertaDengue/episcanner-downloader/compare/1.0.7...1.0.8) (2024-05-29)
+
+
+### Bug Fixes
+
+* **readme:** fix README.md ([9423977](https://github.com/AlertaDengue/episcanner-downloader/commit/94239772eda587c228560c91b3b54a0567c46152))
+* **readme:** fix README.md ([8b0ced2](https://github.com/AlertaDengue/episcanner-downloader/commit/8b0ced224666fd912b711f1947feabf9b8b422d8))
+* **readme:** fix README.md ([325fb6c](https://github.com/AlertaDengue/episcanner-downloader/commit/325fb6c82d9db32ec79e57bbc6b593614bca8239))
+* **semantic-release:** downgrade conventional-changelog-conventionalcommits due to release error ([4c26d11](https://github.com/AlertaDengue/episcanner-downloader/commit/4c26d11c24fd09e3fcc9a48e382583eaf430e63b))
+* **version:** bump version to 1.0.8 to apply latest commits ([646bf8b](https://github.com/AlertaDengue/episcanner-downloader/commit/646bf8b0449c21bba0d89ffb23dc553774f94bd5))
+* **version:** bump version to 1.0.8 to apply latest commits ([d0e4b9e](https://github.com/AlertaDengue/episcanner-downloader/commit/d0e4b9eee27c513d02b4cc7d9fc9923f30680531))
+
 ## [1.0.7](https://github.com/AlertaDengue/episcanner-downloader/compare/1.0.6...1.0.7) (2024-04-22)
 
 
