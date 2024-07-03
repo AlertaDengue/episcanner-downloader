@@ -50,7 +50,7 @@ jobs:
       run: |
         npx --yes \
           -p semantic-release \
-          -p "conventional-changelog-conventionalcommits@7.0.2" \
+          -p "conventional-changelog-conventionalcommits@>=8.0.0" \
           -p "@semantic-release/commit-analyzer" \
           -p "@semantic-release/release-notes-generator" \
           -p "@semantic-release/changelog" \
@@ -67,7 +67,7 @@ jobs:
       run: |
         npx --yes \
           -p semantic-release \
-          -p "conventional-changelog-conventionalcommits@7.0.2" \
+          -p "conventional-changelog-conventionalcommits@>=8.0.0" \
           -p "@semantic-release/commit-analyzer" \
           -p "@semantic-release/release-notes-generator" \
           -p "@semantic-release/changelog" \
