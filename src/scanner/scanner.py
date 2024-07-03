@@ -100,6 +100,9 @@ class EpiScanner:
 
         asyncio.run(self._scan_all_geocodes())
 
+    def to_dataframe(self) -> pd.DataFrame:
+        return self._parse_results()
+
     def export(
         self,
         to: Literal["csv", "parquet", "duckdb"],
@@ -327,7 +330,7 @@ class EpiScanner:
         con = duckdb.connect(str(db.absolute()))
 
         try:
-            con.register("df", df)
+            con.register("data", df)
 
             try:
                 rows = con.execute(
@@ -343,15 +346,15 @@ class EpiScanner:
                         f" WHERE year = {self.year}"
                         f" AND disease = '{self.disease}'"
                     )
-                con.execute(f"INSERT INTO '{self.uf}' SELECT * FROM df")
+                con.execute(f"INSERT INTO '{self.uf}' SELECT * FROM data")
             except (CatalogException, BinderException):
                 # table doesn't exist
                 con.execute(
                     f"CREATE TABLE IF NOT EXISTS '{self.uf}' "
-                    "AS SELECT * FROM df"
+                    "AS SELECT * FROM data"
                 )
         finally:
-            con.unregister("df")
+            con.unregister("data")
             con.close()
 
         return db
