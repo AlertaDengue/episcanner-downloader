@@ -1,6 +1,13 @@
 Release Notes
 ---
 
+## [1.0.9](https://github.com/AlertaDengue/episcanner-downloader/compare/1.0.8...1.0.9) (2024-07-03)
+
+### Bug Fixes
+
+* **release:** fix conventional-changelog-conventionalcommits error ([1e1da0f](https://github.com/AlertaDengue/episcanner-downloader/commit/1e1da0f9ef20f2bdcb13ca05c1bf87ad4cbbcf96))
+* **scanner:** fix dataframe name error when exporting DF data to duckdb ([c1c6bca](https://github.com/AlertaDengue/episcanner-downloader/commit/c1c6bcaf5bb388df094901a014d933a471603100))
+
 ## [1.0.8](https://github.com/AlertaDengue/episcanner-downloader/compare/1.0.7...1.0.8) (2024-05-29)
 
 
