@@ -284,7 +284,7 @@ class EpiScanner:
         # has_transmission = dfy.transmissao.sum() > 3
         has_transmission = (
             (dfy.p_rt1 > THR_PROB).astype(int).sum() > N_WEEKS
-        ) & (dfy.casos.sum() > CUM_CASES)
+        ) & (dfy.casos_est.sum() > CUM_CASES)
 
         if not has_transmission:
             if self.verbose:
@@ -304,7 +304,7 @@ class EpiScanner:
         ].sort_index()
 
         out, curve = otim(
-            df_otim[["casos"]].iloc[44 : 44 + 52],  # NOQA E203
+            df_otim[["casos_est"]].iloc[44 : 44 + 52],  # NOQA E203
         )
 
         self._save_results(geocode, out, curve)
