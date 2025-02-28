@@ -173,7 +173,7 @@ def comp_duration(curve, tj):
 
 def otim(df, verbose=False):
     df.reset_index(inplace=True)
-    df["casos_cum"] = df.casos.cumsum()
+    df["casos_cum"] = df.casos_est.cumsum()
     params = Parameters()
     params.add("gamma", min=0.3, max=0.33)
     params.add("L1", min=1.0, max=5e5)
