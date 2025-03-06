@@ -366,5 +366,4 @@ class EpiScanner:
         finally:
             con.unregister("data")
             con.close()
-
         return db
