@@ -69,7 +69,7 @@ scanner = EpiScanner(disease="dengue", uf="RJ", year=2024)
 scanner.export("duckdb")
 ```
 
-*Replace `uf` with the desired state (e.g., 'MG') and `disease` with the specific disease you want to download ('dengue', 'chikungunya' or 'zika'). Specify the `output_dir` on the `export()` method to change where the data should be saved.*
+*Replace `uf` with the desired state (e.g., 'SP') and `disease` with the specific disease you want to download ('dengue', 'chikungunya' or 'zika'). Specify the `output_dir` on the `export()` method to change where the data should be saved.*
 
 2. In order to read the data, open the file using `duckdb`:
 ```python
