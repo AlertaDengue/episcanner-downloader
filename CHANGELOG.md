@@ -1,6 +1,12 @@
 Release Notes
 ---
 
+## [1.0.11](https://github.com/AlertaDengue/episcanner-downloader/compare/1.0.10...1.0.11) (2025-03-06)
+
+### Bug Fixes
+
+* **pkg:** bump version to 1.0.11 ([7d76cc8](https://github.com/AlertaDengue/episcanner-downloader/commit/7d76cc8ac0c25aad1050ac8e8cc0be5710710a87))
+
 ## [1.0.10](https://github.com/AlertaDengue/episcanner-downloader/compare/1.0.9...1.0.10) (2025-03-06)
 
 ### Bug Fixes
