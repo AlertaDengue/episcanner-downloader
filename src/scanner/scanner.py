@@ -1,6 +1,7 @@
 import asyncio
 import os
 from collections import defaultdict
+from datetime import timedelta
 
 # from datetime import datetime
 from pathlib import Path
@@ -10,6 +11,7 @@ import duckdb
 import pandas as pd
 from dotenv import load_dotenv
 from duckdb import BinderException, CatalogException
+from epiweeks import Week
 from loguru import logger
 from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
@@ -303,8 +305,16 @@ class EpiScanner:
             (df.year == self.year - 1) | (df.year == self.year)
         ].sort_index()
 
+        start_date = pd.to_datetime(Week(self.year - 1, 45).startdate())
+        end_date = pd.to_datetime(
+            Week(self.year - 1, 45).startdate() + timedelta(weeks=52)
+        )
+        df_otim = df_otim.loc[
+            (df_otim.index >= start_date) & (df_otim.index < end_date)
+        ]
+
         out, curve = otim(
-            df_otim[["casos_est"]].iloc[44 : 44 + 52],  # NOQA E203
+            df_otim,  # NOQA E203
         )
 
         self._save_results(geocode, out, curve)
