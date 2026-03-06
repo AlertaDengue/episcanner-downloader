@@ -48,4 +48,4 @@ jobs:
 
     - name: Pytest
       run: |
-        make tests
+        poetry run make tests
