@@ -82,3 +82,4 @@ Replace <$HOME> with your actual home directory or use the `output_dir` specifie
 
 ## License
 Episcanner Downloader is licensed under the [MIT License](https://github.com/AlertaDengue/episcanner-downloader/blob/main/LICENSE). See the LICENSE file for more details.
+
