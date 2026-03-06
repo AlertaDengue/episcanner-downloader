@@ -340,6 +340,11 @@ class EpiScanner:
         con = duckdb.connect(str(db.absolute()))
 
         try:
+            # Convert object-dtype columns to StringDtype so DuckDB
+            # can map them to VARCHAR instead of failing on 'str'.
+            str_cols = df.select_dtypes(include=["object"]).columns
+            df[str_cols] = df[str_cols].astype("string")
+
             con.register("data", df)
 
             try:

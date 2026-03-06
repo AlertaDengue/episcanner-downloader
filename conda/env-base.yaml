@@ -6,6 +6,6 @@ dependencies:
   - docker-compose
   - make
   - poetry
-  - python 3.10.*
+  - python 3.11.*
   - psycopg2
   - urllib3 = 1.26.15 # https://github.com/psf/requests/issues/1096
