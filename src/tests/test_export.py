@@ -5,6 +5,7 @@ from unittest.mock import MagicMock, patch
 import duckdb
 import pandas as pd
 from scanner.scanner import EpiScanner
+from scanner.schema import SirParams
 
 
 class TestEpiScanner(unittest.TestCase):
@@ -450,3 +451,23 @@ class TestEpiScanner(unittest.TestCase):
 
             finally:
                 expected_duckdb.unlink(missing_ok=True)
+
+            result = x.export(to="schema")
+            self.assertIsInstance(result, list)
+            self.assertEqual(len(result), 1)
+            self.assertIsInstance(result[0], SirParams)
+            model = result[0]
+            self.assertEqual(model.disease, "dengue")
+            self.assertEqual(model.cid10, "A90")
+            self.assertEqual(model.year, 2011)
+            self.assertEqual(model.geocode, 1200401)
+            self.assertEqual(model.muni_name, "Rio Branco")
+            self.assertAlmostEqual(model.beta, 0.5092946912801968)
+            self.assertAlmostEqual(model.gamma, 0.3000000000000002)
+            self.assertAlmostEqual(model.R0, 1.6976489709339881)
+            self.assertEqual(model.ep_ini, "201046")
+            self.assertEqual(model.ep_pw, "201105")
+            self.assertEqual(model.ep_end, "201118")
+            self.assertEqual(model.ep_dur, 24)
+            self.assertEqual(model.t_ini, 1)
+            self.assertEqual(model.t_end, 25)

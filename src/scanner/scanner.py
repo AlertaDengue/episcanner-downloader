@@ -17,6 +17,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
 
 from .config import CUM_CASES, MIN_YEAR, N_WEEKS, THR_PROB
+from .schema import SirParams
 from .utils import (
     CACHEPATH,
     CID10,
@@ -107,16 +108,16 @@ class EpiScanner:
 
     def export(
         self,
-        to: Literal["csv", "parquet", "duckdb"],
+        to: Literal["csv", "parquet", "duckdb", "schema"],
         output_dir: str = CACHEPATH,
-    ) -> str:
+    ) -> str | list[SirParams]:
         """
         Exports the result of the Scan into a file with the format:
         [UF]_[disease].[format]
 
         Parameters
         -------
-            to: File format of the exported data. Options: duckdb, csv, parquet
+            to: File format of the exported data. Options: duckdb, csv, parquet, schema
             output_dir: the directory where the file will be exported
         """
         format = to
@@ -124,11 +125,19 @@ class EpiScanner:
         if not bool(self.results):
             raise ValueError("No data to export")
 
-        if format not in ["csv", "parquet", "duckdb"]:
+        if format not in ["csv", "parquet", "duckdb", "schema"]:
             raise ValueError(
                 f"Unknown output format type {format}. "
-                "Options: csv, parquet or duckdb"
+                "Options: csv, parquet, duckdb or schema"
             )
+
+        df = self._parse_results()
+
+        if format == "schema":
+            return [
+                SirParams.model_validate(row)
+                for row in df.to_dict(orient="records")
+            ]
 
         output_dir: Path = Path(output_dir)
         output_dir.mkdir(parents=True, exist_ok=True)
@@ -137,8 +146,6 @@ class EpiScanner:
             self.uf + "_" + self.disease + "_" + str(self.year) + "." + format
         )
         file = output_dir / file_name
-
-        df = self._parse_results()
 
         if file.exists() and format != "duckdb":
             logger.warning(f"Overriding {file}")
