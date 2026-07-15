@@ -10,7 +10,7 @@ dotenv:
 
 .PHONY:tests
 tests:
-	pytest -vv src/tests
+	pytest -vv tests/ --cov=episcanner --cov-report=term-missing
 
 .PHONY: clean
 clean: ## clean all artifacts

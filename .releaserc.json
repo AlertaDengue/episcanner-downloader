@@ -8,12 +8,12 @@
         {
           "replacements": [
             {
-              "files": ["src/__init__.py"],
+              "files": ["episcanner/__init__.py"],
               "from": "return \".*\"  # changed by semantic-release",
               "to": "return \"${nextRelease.version}\"  # changed by semantic-release",
               "results": [
                 {
-                  "file": "src/__init__.py",
+                  "file": "episcanner/__init__.py",
                   "hasChanged": true,
                   "numMatches": 1,
                   "numReplacements": 1
@@ -67,7 +67,7 @@
           "assets": [
             "pyproject.toml",
             "CHANGELOG.md",
-            "src/__init__.py"
+            "episcanner/__init__.py"
           ],
           "message": "chore(release): ${nextRelease.version}"
         }

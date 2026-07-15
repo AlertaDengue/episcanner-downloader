@@ -2,9 +2,9 @@ name: Release
 on:
   workflow_dispatch:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   release:
@@ -16,62 +16,51 @@ jobs:
       packages: write
       contents: write
 
-    defaults:
-      run:
-        shell: bash -l {0}
-
     steps:
-    - uses: actions/checkout@v3
-      with:
-        fetch-depth: 0
-        submodules: recursive
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
-    - uses: conda-incubator/setup-miniconda@v3
-      with:
-        miniforge-version: latest
-        environment-file: conda/env-base.yaml
-        channels: conda-forge,nodefaults
-        activate-environment: episcanner-downloader
-        auto-update-conda: true
-        conda-solver: libmamba
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
 
-    - uses: actions/setup-node@v3
-      with:
-        node-version: 22.14.0
+      - name: Install poetry
+        run: pip install poetry
 
-    - name: Install dependencies
-      run: poetry install
+      - name: Install dependencies
+        run: poetry install
 
-    - name: Test release
-      if: ${{ github.event_name != 'workflow_dispatch' }}
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: |
-        npx --yes \
-          -p semantic-release \
-          -p "conventional-changelog-conventionalcommits@>=8.0.0" \
-          -p "@semantic-release/commit-analyzer" \
-          -p "@semantic-release/release-notes-generator" \
-          -p "@semantic-release/changelog" \
-          -p "@semantic-release/exec" \
-          -p "@semantic-release/github" \
-          -p "@semantic-release/git" \
-          -p "semantic-release-replace-plugin@1.2.7" \
-          semantic-release --dry-run
+      - name: Test release
+        if: ${{ github.event_name != 'workflow_dispatch' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          npx --yes \
+            -p semantic-release \
+            -p "conventional-changelog-conventionalcommits@>=8.0.0" \
+            -p "@semantic-release/commit-analyzer" \
+            -p "@semantic-release/release-notes-generator" \
+            -p "@semantic-release/changelog" \
+            -p "@semantic-release/exec" \
+            -p "@semantic-release/github" \
+            -p "@semantic-release/git" \
+            -p "semantic-release-replace-plugin@1.2.7" \
+            semantic-release --dry-run
 
-    - name: Release
-      if: ${{ github.event_name == 'workflow_dispatch' }}
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: |
-        npx --yes \
-          -p semantic-release \
-          -p "conventional-changelog-conventionalcommits@>=8.0.0" \
-          -p "@semantic-release/commit-analyzer" \
-          -p "@semantic-release/release-notes-generator" \
-          -p "@semantic-release/changelog" \
-          -p "@semantic-release/exec" \
-          -p "@semantic-release/github" \
-          -p "@semantic-release/git" \
-          -p "semantic-release-replace-plugin@1.2.7" \
-          semantic-release --ci --debug
+      - name: Release
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          npx --yes \
+            -p semantic-release \
+            -p "conventional-changelog-conventionalcommits@>=8.0.0" \
+            -p "@semantic-release/commit-analyzer" \
+            -p "@semantic-release/release-notes-generator" \
+            -p "@semantic-release/changelog" \
+            -p "@semantic-release/exec" \
+            -p "@semantic-release/github" \
+            -p "@semantic-release/git" \
+            -p "semantic-release-replace-plugin@1.2.7" \
+            semantic-release --ci --debug
