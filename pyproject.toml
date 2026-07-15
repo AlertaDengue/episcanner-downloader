@@ -7,7 +7,7 @@ license = "MIT"
 readme = "README.md"
 repository = "https://github.com/AlertaDengue/episcanner-downloader"
 homepage = "https://github.com/AlertaDengue/epi-scanner-downloader"
-packages = [{include="scanner", from="src"}]
+packages = [{include = "episcanner"}]
 
 [tool.poetry.dependencies]
 python = ">=3.11,<3.12"
@@ -26,16 +26,17 @@ epiweeks = "^2.3.0"
 numpy = ">=1.26.4,<2"
 pydantic = "^2.13.4"
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 pytest = "*"
 coverage = "^6.5.0"
 nox = "^2022.8.7"
 nox-poetry = "^1.0.1"
 autoflake8 = "^0.4.0"
-black = "^22.10.0"
+black = "^22.12.0"
 pre-commit = "^2.20.0"
 isort = "^5.10.1"
 flake8 = "^5.0.4"
+mypy = "^1.5.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
@@ -66,4 +67,14 @@ exclude = '''
 
 [tool.isort]
 profile = "black"
+line_length = 79
+force_grid_wrap = 0
+force_sort_within_sections = true
 src_paths = ["isort", "test"]
+
+[tool.mypy]
+python_version = "3.11"
+ignore_missing_imports = true
+warn_return_any = true
+warn_unused_configs = true
+exclude = ["src/", "build/", "dist/"]

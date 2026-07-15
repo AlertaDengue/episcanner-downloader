@@ -1,4 +1,59 @@
-NAME_BY_GEOCODE = {
+__all__ = ["get_municipality_name", "get_state_name", "get_cid10"]
+
+from typing import Literal
+
+
+def get_municipality_name(geocode: int) -> str | None:
+    return GEOCODES.get(geocode)
+
+
+def get_state_name(uf: str) -> str | None:
+    return STATES.get(uf)
+
+
+def get_cid10(disease: Literal["dengue", "zika", "ckikungunya"]) -> str | None:
+    return CID10.get(disease)
+
+
+CID10 = {
+    "dengue": "A90",
+    "zika": "A92.8",
+    "ckikungunya": "A92.0",
+}
+
+
+STATES = {
+    "AC": "Acre",
+    "AL": "Alagoas",
+    "AM": "Amazonas",
+    "AP": "Amapá",
+    "BA": "Bahia",
+    "CE": "Ceará",
+    "DF": "Distrito Federal",
+    "ES": "Espírito Santo",
+    "GO": "Goiás",
+    "MA": "Maranhão",
+    "MG": "Minas Gerais",
+    "MS": "Mato Grosso do Sul",
+    "MT": "Mato Grosso",
+    "PA": "Pará",
+    "PB": "Paraíba",
+    "PE": "Pernambuco",
+    "PI": "Piauí",
+    "PR": "Paraná",
+    "RJ": "Rio de Janeiro",
+    "RN": "Rio Grande do Norte",
+    "RO": "Rondônia",
+    "RR": "Roraima",
+    "RS": "Rio Grande do Sul",
+    "SC": "Santa Catarina",
+    "SE": "Sergipe",
+    "SP": "São Paulo",
+    "TO": "Tocantins",
+}
+
+
+GEOCODES = {
     5200050: "Abadia de Goiás",
     3100104: "Abadia dos Dourados",
     5200100: "Abadiânia",
