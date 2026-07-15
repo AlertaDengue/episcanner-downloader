@@ -113,7 +113,7 @@ class Richards(AnalysisModel):
         if verbose:
             if out.success:
                 print(f"found match after {out.nfev} tries")
-            else:
+            else:  # pragma: no cover
                 print("No match found")
 
         pars = out.params.valuesdict()

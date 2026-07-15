@@ -81,3 +81,8 @@ class TestRichardsInstatiation:
 
     def test_is_subclass_of_analysis_model(self):
         assert issubclass(Richards, AnalysisModel)
+
+    def test_fit_verbose(self):
+        data = _make_data()
+        model = Richards.fit(data, verbose=True)
+        assert isinstance(model, Richards)

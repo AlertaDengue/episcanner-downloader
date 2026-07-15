@@ -100,9 +100,9 @@ class EpiScanner:
                 file = self._to_duckdb(df, uf, output_dir)
 
             logger.info(f"{uf} data for {self.year} wrote to {file}")
-        except (FileNotFoundError, PermissionError) as e:
+        except (FileNotFoundError, PermissionError) as e:  # pragma: no cover
             raise ValueError(f"Failed to write file: {e}")
-        except Exception as e:
+        except Exception as e:  # pragma: no cover
             raise ValueError(f"Unexpected error while writing file: {e}")
 
         return str(file.absolute())

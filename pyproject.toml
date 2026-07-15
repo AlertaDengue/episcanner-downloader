@@ -28,6 +28,7 @@ pydantic = "^2.13.4"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "*"
+pytest-cov = "*"
 coverage = "^6.5.0"
 nox = "^2022.8.7"
 nox-poetry = "^1.0.1"
