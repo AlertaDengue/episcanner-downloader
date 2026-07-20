@@ -64,7 +64,7 @@ class TestGetSIRPars:
 
 
 class TestCompDuration:
-    def test_normal_curve(self):
+    def test_52_weeks(self):
         ew_list = [Week(2024, w) for w in range(1, 53)]
         fc = FittedCurve(
             ew=ew_list,
@@ -73,6 +73,17 @@ class TestCompDuration:
         )
         ep = comp_duration(fc, tp1=5.0)
         assert ep.pw.startswith("2024")
+        assert ep.dur > 0
+
+    def test_53_weeks(self):
+        ew_list = [Week(2020, w) for w in range(1, 54)]
+        fc = FittedCurve(
+            ew=ew_list,
+            casos_cum=list(range(53)),
+            richards=[float(i) for i in range(53)],
+        )
+        ep = comp_duration(fc, tp1=5.0)
+        assert ep.pw.startswith("2020")
         assert ep.dur > 0
 
     def test_peak_after_end_returns_none(self):

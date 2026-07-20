@@ -62,7 +62,7 @@ def get_SIR_pars(rp: RichardsPars | dict[str, float]) -> SIRPars:
 def comp_duration(curve: FittedCurve, tp1: float) -> EpDuration:
     richards_arr = np.array(curve.richards)
     df_aux = pd.DataFrame()
-    df_aux["SE"] = [w.cdcformat() for w in curve.ew[:52]]
+    df_aux["SE"] = [w.cdcformat() for w in curve.ew]
 
     pw_date = Week.fromstring(str(df_aux.SE[0])).startdate() + timedelta(
         days=7
