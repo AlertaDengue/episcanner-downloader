@@ -68,7 +68,7 @@ class Richards(AnalysisModel):
         )
         df["casos_cum"] = df.casos_est.cumsum()
         t_range = np.arange(df.shape[0])
-        richfun = self.evaluate(t_range)
+        richfun = self.evaluate(t_range)  # type: ignore
         return FittedCurve(
             ew=[Week.fromdate(d) for d in df.data_iniSE],
             casos_cum=df.casos_cum.tolist(),
@@ -107,16 +107,16 @@ class Richards(AnalysisModel):
             Richards.objective,
             params,
             args=(0, df),
-            method="diferential_evolution",
+            method="differential_evolution",
         )
 
         if verbose:
-            if out.success:
-                print(f"found match after {out.nfev} tries")
+            if out.success:  # type: ignore
+                print(f"found match after {out.nfev} tries")  # type: ignore
             else:  # pragma: no cover
                 print("No match found")
 
-        pars = out.params.valuesdict()
+        pars = out.params.valuesdict()  # type: ignore
         return Richards(
             L=pars["L1"],
             a=pars["a1"],
@@ -180,7 +180,12 @@ class Richards(AnalysisModel):
         if high_rt1 <= N_WEEKS or total_cases <= CUM_CASES:
             return None
 
-        fit_data = [r for r in city_data if r.ew.year in (year - 1, year)]
+        fit_data = [
+            r
+            for r in city_data
+            if (r.ew.year == year - 1 and r.ew.week >= 45)
+            or (r.ew.year == year and r.ew.week < 45)
+        ]
 
         model = Richards.fit(fit_data)
         curve = model.to_curve(fit_data)
